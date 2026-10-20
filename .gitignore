@@ -1,0 +1,17 @@
+# Ambiente e segredos
+.env
+.env.*
+!.env.example
+
+# Dependências
+node_modules/
+
+# Logs e cobertura
+npm-debug.log*
+coverage/
+.nyc_output/
+
+# SO e IDEs
+.DS_Store
+.idea/
+.vscode/
