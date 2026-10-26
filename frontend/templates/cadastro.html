@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PartyHub - Cadastro</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- fonte do título do site -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chewy&display=swap" rel="stylesheet">
+
+    <!-- ícone de logo do site -->
+    <link rel="icon" href="{{ url_for('static', filename='imagens/presente.ico') }}">
+
+</head>
+<body>
+    <main class="container">
+
+        <div class="site">
+            <h1 class="titulo-site"> PartyHub </h1>
+
+            <!-- imagem presente -->
+            <img class="imagem-presente" src="{{ url_for('static', filename='imagens/presente.png') }}" alt="presente">
+        </div>
+
+
+        <p class="subtitle">
+            Inscreva-se no site.
+        </p>
+
+        <form id="formulario-cadastro" method="POST">
+
+            <div class="field">
+                <label for="nomeusuario"> Nome de usuário </label>
+                <input
+                    type="text"
+                    id="nomeusuario"
+                    name="nomeusuario"
+                    placeholder="Digite seu nome de usuário:"
+                    autocomplete="off"
+                    required
+                >
+            </div>
+
+            <div class="field">
+                <label for="senha"> Senha </label>
+                <input
+                    type="password"
+                    id="senha"
+                    name="senha"
+                    minlength="8"
+                    pattern="(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}" 
+                    placeholder="Digite sua senha:"
+                    autocomplete="off"
+                    required
+
+                >
+            </div>
+
+            <button type="submit">
+               Cadastre-se
+            </button>
+        </form>
+
+    </main>
+
+    <script src="{{ url_for('static', filename='js/cadastro.js') }}"></script>    
+</body>
+</html>
