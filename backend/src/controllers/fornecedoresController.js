@@ -267,3 +267,102 @@ export async function alterarAtivo(req, res) {
 
   res.json(resultado.rows[0]);
 }
+
+export async function listarFornecedores(req, res) {
+  const { categoria, cidade } = req.query ?? {};
+
+  const resultadoFornecedores = await query(
+    `SELECT id, usuario_id, nome_empresa, descricao, cidade,
+            telefone_contato, whatsapp, email_contato, ativo
+     FROM fornecedores
+     WHERE ativo = TRUE
+     ORDER BY id ASC`,
+  );
+
+  if (resultadoFornecedores.rowCount === 0) {
+    return res.json([]);
+  }
+
+  const resultadoServicos = await query(
+    `SELECT fs.id, fs.fornecedor_id, fs.categoria_id, c.nome AS categoria_nome,
+            fs.descricao, fs.preco_referencia
+     FROM fornecedorservicos fs
+     JOIN categorias c ON c.id = fs.categoria_id
+     ORDER BY fs.id ASC`,
+  );
+
+  const servicosPorFornecedor = new Map();
+  for (const servico of resultadoServicos.rows) {
+    const lista = servicosPorFornecedor.get(servico.fornecedor_id) || [];
+    lista.push(servico);
+    servicosPorFornecedor.set(servico.fornecedor_id, lista);
+  }
+
+  const filtroCidade =
+    typeof cidade === 'string' && cidade.trim()
+      ? cidade.trim().toLowerCase()
+      : null;
+  const filtroCategoriaTexto =
+    typeof categoria === 'string' && categoria.trim()
+      ? categoria.trim()
+      : null;
+  const filtroCategoriaId =
+    filtroCategoriaTexto && /^\d+$/.test(filtroCategoriaTexto)
+      ? Number(filtroCategoriaTexto)
+      : null;
+
+  const catalogo = resultadoFornecedores.rows
+    .map((fornecedor) => ({
+      ...fornecedor,
+      servicos: servicosPorFornecedor.get(fornecedor.id) || [],
+    }))
+    .filter((fornecedor) => {
+      if (fornecedor.servicos.length === 0) return false;
+
+      if (filtroCidade) {
+        const cidadeFornecedor = (fornecedor.cidade || '').toLowerCase();
+        if (cidadeFornecedor !== filtroCidade) return false;
+      }
+
+      if (filtroCategoriaTexto) {
+        const atendeCategoria = fornecedor.servicos.some((s) => {
+          if (filtroCategoriaId !== null) {
+            return s.categoria_id === filtroCategoriaId;
+          }
+          return (
+            s.categoria_nome.toLowerCase() ===
+            filtroCategoriaTexto.toLowerCase()
+          );
+        });
+        if (!atendeCategoria) return false;
+      }
+
+      return true;
+    });
+
+  return res.json(catalogo);
+}
+
+export async function obterFornecedor(req, res) {
+  const fornecedorId = Number(req.params.id);
+  if (!Number.isInteger(fornecedorId) || fornecedorId <= 0) {
+    throw dadosInvalidos('Identificador de fornecedor inválido.');
+  }
+
+  const resultado = await query(
+    `SELECT id, usuario_id, nome_empresa, descricao, cidade,
+            telefone_contato, whatsapp, email_contato, ativo
+     FROM fornecedores
+     WHERE id = $1`,
+    [fornecedorId],
+  );
+
+  if (resultado.rowCount === 0) {
+    throw naoEncontrado('Fornecedor não encontrado.');
+  }
+
+  const fornecedor = resultado.rows[0];
+  const servicos = await listarServicosDoFornecedor(fornecedor.id);
+
+  res.json({ ...fornecedor, servicos });
+}
