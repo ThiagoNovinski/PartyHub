@@ -130,3 +130,135 @@ export async function cancelarSolicitacao(req, res) {
 
   res.json(atualizada.rows[0]);
 }
+
+const STATUS_SOLICITACAO_VALIDOS = [
+  'PENDENTE',
+  'ACEITA',
+  'RECUSADA',
+  'CANCELADA',
+];
+
+export async function listarSolicitacoesRecebidas(req, res) {
+  const { status } = req.query ?? {};
+  let filtroStatus = null;
+  if (typeof status === 'string' && status.trim()) {
+    filtroStatus = status.trim().toUpperCase();
+    if (!STATUS_SOLICITACAO_VALIDOS.includes(filtroStatus)) {
+      throw dadosInvalidos(
+        'Filtro status inválido. Use PENDENTE, ACEITA, RECUSADA ou CANCELADA.',
+      );
+    }
+  }
+
+  const fornRes = await query(
+    'SELECT id FROM fornecedores WHERE usuario_id = $1',
+    [req.usuario.id],
+  );
+  if (fornRes.rowCount === 0) {
+    return res.json([]);
+  }
+
+  const fornecedorId = fornRes.rows[0].id;
+  const resultado = await query(
+    `SELECT s.id, s.festa_id, s.fornecedor_id, s.categoria_id,
+            c.nome AS categoria_nome,
+            s.mensagem, s.status, s.resposta, s.criado_em, s.respondido_em,
+            f.titulo AS festa_titulo, f.data AS festa_data,
+            f.hora_inicio, f.hora_fim, f.local, f.qtd_convidados, f.tema,
+            u.nome AS cliente_nome, u.email AS cliente_email, u.telefone AS cliente_telefone
+     FROM solicitacoes s
+     JOIN festas f ON f.id = s.festa_id
+     JOIN usuarios u ON u.id = f.cliente_id
+     JOIN categorias c ON c.id = s.categoria_id
+     WHERE s.fornecedor_id = $1
+     ORDER BY s.criado_em DESC, s.id DESC`,
+    [fornecedorId],
+  );
+
+  const lista = filtroStatus
+    ? resultado.rows.filter((s) => s.status === filtroStatus)
+    : resultado.rows;
+
+  return res.json(lista);
+}
+
+export async function responderSolicitacao(req, res) {
+  const solicitacaoId = Number(req.params.id);
+  if (!Number.isInteger(solicitacaoId) || solicitacaoId <= 0) {
+    throw dadosInvalidos('Identificador de solicitação inválido.');
+  }
+
+  const { status, resposta } = req.body ?? {};
+  if (status !== 'ACEITA' && status !== 'RECUSADA') {
+    throw dadosInvalidos('O campo status deve ser "ACEITA" ou "RECUSADA".');
+  }
+  if (resposta !== undefined && resposta !== null && typeof resposta !== 'string') {
+    throw dadosInvalidos('O campo resposta deve ser um texto.');
+  }
+  const respostaLimpa =
+    typeof resposta === 'string' && resposta.trim() ? resposta.trim() : null;
+
+  const fornRes = await query(
+    'SELECT id FROM fornecedores WHERE usuario_id = $1',
+    [req.usuario.id],
+  );
+  if (fornRes.rowCount === 0) {
+    throw semPermissao('Perfil de fornecedor não encontrado para este usuário.');
+  }
+  const fornecedorId = fornRes.rows[0].id;
+
+  const solRes = await query(
+    `SELECT s.id, s.festa_id, s.fornecedor_id, s.categoria_id, s.status,
+            f.data AS festa_data
+     FROM solicitacoes s
+     JOIN festas f ON f.id = s.festa_id
+     WHERE s.id = $1`,
+    [solicitacaoId],
+  );
+  if (solRes.rowCount === 0) {
+    throw naoEncontrado('Solicitação não encontrada.');
+  }
+
+  const solicitacao = solRes.rows[0];
+  if (solicitacao.fornecedor_id !== fornecedorId) {
+    throw semPermissao('Apenas o fornecedor destinatário pode responder a esta solicitação.');
+  }
+
+  if (solicitacao.status !== 'PENDENTE') {
+    throw conflito(
+      'JA_RESPONDIDA',
+      'Esta solicitação não está mais pendente e não pode ser respondida novamente.',
+    );
+  }
+
+  if (status === 'ACEITA') {
+    const conflitoData = await query(
+      `SELECT s.id
+       FROM solicitacoes s
+       JOIN festas f ON f.id = s.festa_id
+       WHERE s.fornecedor_id = $1
+         AND s.status = 'ACEITA'
+         AND s.festa_id <> $2
+         AND f.data = $3`,
+      [fornecedorId, solicitacao.festa_id, solicitacao.festa_data],
+    );
+
+    if (conflitoData.rowCount > 0) {
+      throw conflito(
+        'DATA_OCUPADA',
+        `Você já aceitou outra festa na data ${solicitacao.festa_data}.`,
+      );
+    }
+  }
+
+  const atualizada = await query(
+    `UPDATE solicitacoes
+     SET status = $1, resposta = $2, respondido_em = NOW()
+     WHERE id = $3
+     RETURNING id, festa_id, fornecedor_id, categoria_id, mensagem,
+               status, resposta, criado_em, respondido_em`,
+    [status, respostaLimpa, solicitacaoId],
+  );
+
+  res.json(atualizada.rows[0]);
+}
