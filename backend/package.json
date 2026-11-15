@@ -9,6 +9,8 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
+    "migrate": "node src/scripts/executarSql.js migrations",
+    "seed": "node src/scripts/executarSql.js seeds",
     "lint": "eslint .",
     "test": "vitest run"
   },
