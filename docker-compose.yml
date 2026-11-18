@@ -1,18 +1,59 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16-alpine
     container_name: partyhub-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: partyhub
-      POSTGRES_USER: partyhub
-      POSTGRES_PASSWORD: sua_senha_aqui
+      POSTGRES_DB: ${POSTGRES_DB:-partyhub}
+      POSTGRES_USER: ${POSTGRES_USER:-partyhub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sua_senha_aqui}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-partyhub} -d ${POSTGRES_DB:-partyhub}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: partyhub-backend
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-3000}:3000"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      API_PORT: 3000
+    volumes:
+      - ./backend:/app/backend
+      - /app/backend/node_modules
+      - ./database:/app/database
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: partyhub-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
 
 volumes:
   pgdata:
