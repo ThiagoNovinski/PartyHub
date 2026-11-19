@@ -2,21 +2,28 @@ import { useCallback, useEffect, useState } from 'react';
 import { Layout } from '../components/Layout';
 import { Link } from '../router';
 import { api } from '../services/api';
+import { filtrarFornecedoresPorLocal } from '../utils/filtrarFornecedores';
 
 export function Catalogo() {
   const [categorias, setCategorias] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
+  const [totalNaCategoria, setTotalNaCategoria] = useState(0);
   const [categoria, setCategoria] = useState('');
   const [cidade, setCidade] = useState('');
+  const [cidadeAplicada, setCidadeAplicada] = useState('');
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
 
-  const buscarCatalogo = useCallback(async (filtros = {}) => {
+  const buscarCatalogo = useCallback(async (categoriaFiltro = '', cidadeFiltro = '') => {
     setCarregando(true);
     setErro('');
     try {
-      const lista = await api.listarFornecedores(filtros);
-      setFornecedores(lista);
+      const lista = await api.listarFornecedores({
+        categoria: categoriaFiltro || undefined,
+      });
+      setTotalNaCategoria(lista.length);
+      setCidadeAplicada(cidadeFiltro.trim());
+      setFornecedores(filtrarFornecedoresPorLocal(lista, cidadeFiltro));
     } catch (err) {
       setErro(err.message || 'Erro ao carregar fornecedores.');
     } finally {
@@ -34,16 +41,13 @@ export function Catalogo() {
 
   function aoFiltrar(event) {
     event.preventDefault();
-    buscarCatalogo({
-      categoria: categoria || undefined,
-      cidade: cidade.trim() || undefined,
-    });
+    buscarCatalogo(categoria, cidade);
   }
 
   function aoLimpar() {
     setCategoria('');
     setCidade('');
-    buscarCatalogo();
+    buscarCatalogo('', '');
   }
 
   return (
@@ -62,13 +66,13 @@ export function Catalogo() {
             </option>
           ))}
         </select>{' '}
-        <label htmlFor="filtro-cidade">Cidade: </label>
+        <label htmlFor="filtro-cidade">Cidade / Local: </label>
         <input
           id="filtro-cidade"
           type="text"
           value={cidade}
           onChange={(e) => setCidade(e.target.value)}
-          placeholder="Ex.: Rio Grande"
+          placeholder="Ex.: Pelotas"
         />{' '}
         <button type="submit">Filtrar</button>{' '}
         <button type="button" onClick={aoLimpar}>
@@ -86,7 +90,28 @@ export function Catalogo() {
       {carregando && <p>Carregando fornecedores...</p>}
 
       {!carregando && !erro && fornecedores.length === 0 && (
-        <p>Nenhum fornecedor ativo encontrado para os filtros informados.</p>
+        <div>
+          <p>
+            Nenhum fornecedor ativo encontrado
+            {cidadeAplicada ? ` para "${cidadeAplicada}"` : ''} com os filtros
+            informados.
+          </p>
+          {cidadeAplicada && totalNaCategoria > 0 && (
+            <p>
+              Existem {totalNaCategoria} fornecedor(es) ativo(s) em outras
+              cidades.{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  setCidade('');
+                  buscarCatalogo(categoria, '');
+                }}
+              >
+                Ver todas as cidades
+              </button>
+            </p>
+          )}
+        </div>
       )}
 
       {!carregando && fornecedores.length > 0 && (

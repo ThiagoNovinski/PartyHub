@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { InputHora24h } from '../components/InputHora24h';
 import { Layout } from '../components/Layout';
 import { Link } from '../router';
 import { api } from '../services/api';
@@ -117,25 +118,23 @@ export function MinhasFestas() {
           </div>
           <br />
           <div>
-            <label htmlFor="festa-hora-inicio">Hora de início *</label>
+            <label htmlFor="festa-hora-inicio">Hora de início (24h) *</label>
             <br />
-            <input
+            <InputHora24h
               id="festa-hora-inicio"
-              type="time"
               value={form.hora_inicio}
-              onChange={(e) => atualizarCampo('hora_inicio', e.target.value)}
+              onChange={(valor) => atualizarCampo('hora_inicio', valor)}
               required
             />
           </div>
           <br />
           <div>
-            <label htmlFor="festa-hora-fim">Hora de término *</label>
+            <label htmlFor="festa-hora-fim">Hora de término (24h) *</label>
             <br />
-            <input
+            <InputHora24h
               id="festa-hora-fim"
-              type="time"
               value={form.hora_fim}
-              onChange={(e) => atualizarCampo('hora_fim', e.target.value)}
+              onChange={(valor) => atualizarCampo('hora_fim', valor)}
               required
             />
           </div>

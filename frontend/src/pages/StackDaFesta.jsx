@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { InputHora24h } from '../components/InputHora24h';
 import { Layout } from '../components/Layout';
 import { Link } from '../router';
 import { api } from '../services/api';
+import { filtrarFornecedoresPorLocal } from '../utils/filtrarFornecedores';
 
 function chaveStackLocal(festaId) {
   return `partyhub_stack_local_${festaId}`;
@@ -24,6 +26,8 @@ export function StackDaFesta({ id }) {
 
   const [categoriaBuscaAtiva, setCategoriaBuscaAtiva] = useState(null);
   const [cidadeFiltro, setCidadeFiltro] = useState('');
+  const [cidadeAplicada, setCidadeAplicada] = useState('');
+  const [totalFornecedoresCategoria, setTotalFornecedoresCategoria] = useState(0);
   const [fornecedoresEncontrados, setFornecedoresEncontrados] = useState([]);
   const [carregandoFornecedores, setCarregandoFornecedores] = useState(false);
   const [mensagensPorFornecedor, setMensagensPorFornecedor] = useState({});
@@ -69,6 +73,9 @@ export function StackDaFesta({ id }) {
   useEffect(() => {
     setStackLocalIds(lerStackLocal(id));
     setCategoriaBuscaAtiva(null);
+    setCidadeFiltro('');
+    setCidadeAplicada('');
+    setTotalFornecedoresCategoria(0);
     setFornecedoresEncontrados([]);
     carregarDados();
   }, [id, carregarDados]);
@@ -121,9 +128,10 @@ export function StackDaFesta({ id }) {
     try {
       const lista = await api.listarFornecedores({
         categoria: catId,
-        cidade: cidadeOpc.trim() || undefined,
       });
-      setFornecedoresEncontrados(lista);
+      setTotalFornecedoresCategoria(lista.length);
+      setCidadeAplicada(cidadeOpc.trim());
+      setFornecedoresEncontrados(filtrarFornecedoresPorLocal(lista, cidadeOpc));
     } catch (err) {
       setErro(err.message || 'Erro ao buscar fornecedores.');
     } finally {
@@ -296,28 +304,26 @@ export function StackDaFesta({ id }) {
                 </div>
                 <br />
                 <div>
-                  <label htmlFor="ed-inicio">Hora início *</label>
+                  <label htmlFor="ed-inicio">Hora início (24h) *</label>
                   <br />
-                  <input
+                  <InputHora24h
                     id="ed-inicio"
-                    type="time"
                     value={formEdicao.hora_inicio}
-                    onChange={(e) =>
-                      setFormEdicao((p) => ({ ...p, hora_inicio: e.target.value }))
+                    onChange={(valor) =>
+                      setFormEdicao((p) => ({ ...p, hora_inicio: valor }))
                     }
                     required
                   />
                 </div>
                 <br />
                 <div>
-                  <label htmlFor="ed-fim">Hora término *</label>
+                  <label htmlFor="ed-fim">Hora término (24h) *</label>
                   <br />
-                  <input
+                  <InputHora24h
                     id="ed-fim"
-                    type="time"
                     value={formEdicao.hora_fim}
-                    onChange={(e) =>
-                      setFormEdicao((p) => ({ ...p, hora_fim: e.target.value }))
+                    onChange={(valor) =>
+                      setFormEdicao((p) => ({ ...p, hora_fim: valor }))
                     }
                     required
                   />
@@ -481,20 +487,66 @@ export function StackDaFesta({ id }) {
                     buscarFornecedoresDaCategoria(categoriaBuscaAtiva, cidadeFiltro);
                   }}
                 >
-                  <label htmlFor="stack-cidade">Filtrar por cidade: </label>
+                  <label htmlFor="stack-cidade">Filtrar por cidade / local: </label>
                   <input
                     id="stack-cidade"
                     type="text"
                     value={cidadeFiltro}
                     onChange={(e) => setCidadeFiltro(e.target.value)}
-                    placeholder="Ex.: Rio Grande"
+                    placeholder="Ex.: Pelotas"
                   />{' '}
-                  <button type="submit">Filtrar</button>
+                  <button type="submit">Filtrar</button>{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCidadeFiltro('');
+                      buscarFornecedoresDaCategoria(categoriaBuscaAtiva, '');
+                    }}
+                  >
+                    Limpar
+                  </button>
+                  {festa.local && (
+                    <>
+                      {' '}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCidadeFiltro(festa.local);
+                          buscarFornecedoresDaCategoria(
+                            categoriaBuscaAtiva,
+                            festa.local,
+                          );
+                        }}
+                      >
+                        Usar local da festa ({festa.local})
+                      </button>
+                    </>
+                  )}
                 </form>
 
                 {carregandoFornecedores && <p>Buscando fornecedores...</p>}
                 {!carregandoFornecedores && fornecedoresEncontrados.length === 0 && (
-                  <p>Nenhum fornecedor ativo encontrado para esta categoria.</p>
+                  <div>
+                    <p>
+                      Nenhum fornecedor ativo encontrado para {nomeCategoriaAtiva}
+                      {cidadeAplicada ? ` em "${cidadeAplicada}"` : ''}.
+                    </p>
+                    {cidadeAplicada && totalFornecedoresCategoria > 0 && (
+                      <p>
+                        Existem {totalFornecedoresCategoria} fornecedor(es) ativo(s)
+                        para esta categoria em outras cidades.{' '}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCidadeFiltro('');
+                            buscarFornecedoresDaCategoria(categoriaBuscaAtiva, '');
+                          }}
+                        >
+                          Mostrar todas as cidades
+                        </button>
+                      </p>
+                    )}
+                  </div>
                 )}
                 {!carregandoFornecedores && fornecedoresEncontrados.length > 0 && (
                   <ul>
