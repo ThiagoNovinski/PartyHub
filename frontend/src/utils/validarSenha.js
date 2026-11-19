@@ -1,14 +1,9 @@
 export const MENSAGEM_SENHA_INVALIDA =
-  'A senha deve ter no mínimo 8 caracteres, incluindo uma letra maiúscula, um número e um caractere especial.';
+  'A senha é obrigatória e deve ter pelo menos 6 caracteres.';
 
 /**
- * Valida se a senha atende aos critérios mínimos definidos no template original.
+ * Valida se a senha atende ao tamanho mínimo exigido pelo back-end.
  */
 export function validarSenha(senha) {
-  return (
-    senha.length >= 8 &&
-    /[A-Z]/.test(senha) &&
-    /[0-9]/.test(senha) &&
-    /[^A-Za-z0-9]/.test(senha)
-  );
+  return typeof senha === 'string' && senha.length >= 6;
 }
