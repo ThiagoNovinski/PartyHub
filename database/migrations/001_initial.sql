@@ -17,6 +17,17 @@ CREATE TABLE IF NOT EXISTS categorias (
     nome VARCHAR(60) NOT NULL UNIQUE
 );
 
+-- Carga inicial idempotente das categorias básicas de serviço
+INSERT INTO categorias (nome) VALUES
+    ('Buffet'),
+    ('Bebidas'),
+    ('Decoração'),
+    ('Local'),
+    ('Segurança'),
+    ('Música'),
+    ('Fotografia')
+ON CONFLICT (nome) DO NOTHING;
+
 -- 3. Tabela de Fornecedores (Vinculada a um usuário do tipo 'fornecedor')
 CREATE TABLE IF NOT EXISTS fornecedores (
     id SERIAL PRIMARY KEY,
