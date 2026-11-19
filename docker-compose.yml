@@ -44,6 +44,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: dev
     container_name: partyhub-frontend
     restart: unless-stopped
     ports:
