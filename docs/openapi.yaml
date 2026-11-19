@@ -1,0 +1,974 @@
+openapi: 3.0.3
+info:
+  title: PartyHub API
+  version: 0.1.0
+  description: |
+    API REST da plataforma PartyHub para conectar organizadores de festas (clientes)
+    e fornecedores de serviços de eventos.
+
+servers:
+  - url: http://localhost:3000
+    description: Desenvolvimento direto na API
+  - url: /api
+    description: Proxy reverso (Nginx em produção / Vite em desenvolvimento)
+
+tags:
+  - name: Saúde
+  - name: Autenticação
+  - name: Catálogo
+  - name: Fornecedor
+  - name: Festas
+  - name: Solicitações
+
+paths:
+  /health:
+    get:
+      tags: [Saúde]
+      summary: Verifica se a API está no ar
+      responses:
+        "200":
+          description: API operacional
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                required: [status]
+
+  /auth/registrar:
+    post:
+      tags: [Autenticação]
+      summary: Cria uma nova conta de cliente ou fornecedor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegistroInput"
+      responses:
+        "201":
+          description: Usuário criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/DadosInvalidos"
+        "409":
+          description: E-mail já cadastrado (`EMAIL_EM_USO`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErroPadrao"
+
+  /auth/login:
+    post:
+      tags: [Autenticação]
+      summary: Autentica o usuário e retorna um JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/DadosInvalidos"
+        "401":
+          $ref: "#/components/responses/NaoAutenticado"
+
+  /auth/eu:
+    get:
+      tags: [Autenticação]
+      summary: Retorna os dados do usuário autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dados do usuário logado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Usuario"
+        "401":
+          $ref: "#/components/responses/NaoAutenticado"
+
+  /categorias:
+    get:
+      tags: [Catálogo]
+      summary: Lista todas as categorias de serviço disponíveis
+      responses:
+        "200":
+          description: Lista de categorias
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Categoria"
+
+  /fornecedores:
+    get:
+      tags: [Catálogo]
+      summary: Lista fornecedores ativos que possuem ao menos um serviço
+      parameters:
+        - name: categoria
+          in: query
+          required: false
+          description: ID numérico ou nome da categoria
+          schema:
+            type: string
+        - name: cidade
+          in: query
+          required: false
+          description: Filtro de cidade
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista de fornecedores do catálogo público
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FornecedorComServicos"
+
+  /fornecedores/{id}:
+    get:
+      tags: [Catálogo]
+      summary: Detalhes de um fornecedor com seus serviços e contatos
+      parameters:
+        - $ref: "#/components/parameters/IdNumerico"
+      responses:
+        "200":
+          description: Dados completos do fornecedor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FornecedorComServicos"
+        "400":
+          $ref: "#/components/responses/DadosInvalidos"
+        "404":
+          $ref: "#/components/responses/NaoEncontrado"
+
+  /fornecedores/meu:
+    put:
+      tags: [Fornecedor]
+      summary: Cria ou atualiza o perfil comercial do fornecedor autenticado
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PerfilFornecedorInput"
+      responses:
+        "200":
+          description: Perfil salvo com lista de serviços
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FornecedorComServicos"
+        "400":
+          $ref: "#/components/responses/DadosInvalidos"
+        "401":
+          $ref: "#/components/responses/NaoAutenticado"
+        "403":
+          $ref: "#/components/responses/SemPermissao"
+
+  /fornecedores/meu/ativo:
+    patch:
+      tags: [Fornecedor]
+      summary: Ativa ou desativa temporariamente o perfil do fornecedor no catálogo
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ativo]
+              properties:
+                ativo:
+                  type: boolean
+      responses:
+        "200":
+          description: Status atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Fornecedor"
+        "400":
+          $ref: "#/components/responses/DadosInvalidos"
+        "401":
+          $ref: "#/components/responses/NaoAutenticado"
+        "403":
+          $ref: "#/components/responses/SemPermissao"
+        "404":
+          $ref: "#/components/responses/NaoEncontrado"
+
+  /fornecedores/meu/servicos:
+    post:
+      tags: [Fornecedor]
+      summary: Adiciona um serviço ao perfil do fornecedor autenticado
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServicoInput"
+      responses:
+        "201":
+          description: Serviço adicionado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FornecedorServico"
+        "400":
+          $ref: "#/components/responses/DadosInvalidos"
+        "401":
+          $ref: "#/components/responses/NaoAutenticado"
+        "403":
+          $ref: "#/components/responses/SemPermissao"
+        "404":
+          $ref: "#/components/responses/NaoEncontrado"
+        "409":
+          description: Categoria já cadastrada para este fornecedor (`SERVICO_DUPLICADO`)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErroPadrao"
+
+  /fornecedores/meu/servicos/{id}:
+    put:
+      tags: [Fornecedor]
+      summary: Edita descrição e preço de referência de um serviço do fornecedor
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdNumerico"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ServicoEdicaoInput"
+      responses:
+        "200":
+          description: Serviço atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FornecedorServico"
+        "400":
+          $ref: "#/components/responses/DadosInvalidos"
+        "401":
+          $ref: "#/components/responses/NaoAutenticado"
+        "403":
+          $ref: "#/components/responses/SemPermissao"
+        "404":
+          $ref: "#/components/responses/NaoEncontrado"
+    delete:
+      tags: [Fornecedor]
+      summary: Remove um serviço do fornecedor autenticado
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdNumerico"
+      responses:
+        "204":
+          description: Serviço removido sem corpo de resposta
+        "400":
+          $ref: "#/components/responses/DadosInvalidos"
+        "401":
+          $ref: "#/components/responses/NaoAutenticado"
+        "403":
+          $ref: "#/components/responses/SemPermissao"
+        "404":
+          $ref: "#/components/responses/NaoEncontrado"
+
+  /festas:
+    get:
+      tags: [Festas]
+      summary: Lista as festas cadastradas pelo cliente autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Lista de festas do cliente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Festa"
+        "401":
+          $ref: "#/components/responses/NaoAutenticado"
+        "403":
+          $ref: "#/components/responses/SemPermissao"
+    post:
+      tags: [Festas]
+      summary: Cadastra uma nova festa para o cliente autenticado
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FestaInput"
+      responses:
+        "201":
+          description: Festa criada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Festa"
+        "400":
+          $ref: "#/components/responses/DadosInvalidos"
+        "401":
+          $ref: "#/components/responses/NaoAutenticado"
+        "403":
+          $ref: "#/components/responses/SemPermissao"
+
+  /festas/{id}:
+    get:
+      tags: [Festas]
+      summary: Detalhes da festa com sua stack e solicitações
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdNumerico"
+      responses:
+        "200":
+          description: Detalhe da festa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FestaDetalhe"
+        "400":
+          $ref: "#/components/responses/DadosInvalidos"
+        "401":
+          $ref: "#/components/responses/NaoAutenticado"
+        "403":
+          $ref: "#/components/responses/SemPermissao"
+        "404":
+          $ref: "#/components/responses/NaoEncontrado"
+    put:
+      tags: [Festas]
+      summary: Atualiza dados da festa (desde que não esteja CANCELADA)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdNumerico"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FestaEdicaoInput"
+      responses:
+        "200":
+          description: Festa atualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Festa"
+        "400":
+          $ref: "#/components/responses/DadosInvalidos"
+        "401":
+          $ref: "#/components/responses/NaoAutenticado"
+        "403":
+          $ref: "#/components/responses/SemPermissao"
+        "404":
+          $ref: "#/components/responses/NaoEncontrado"
+
+  /festas/{id}/cancelar:
+    patch:
+      tags: [Festas]
+      summary: Cancela logicamente a festa e suas solicitações pendentes
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdNumerico"
+      responses:
+        "200":
+          description: Festa cancelada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Festa"
+        "400":
+          $ref: "#/components/responses/DadosInvalidos"
+        "401":
+          $ref: "#/components/responses/NaoAutenticado"
+        "403":
+          $ref: "#/components/responses/SemPermissao"
+        "404":
+          $ref: "#/components/responses/NaoEncontrado"
+
+  /festas/{id}/solicitacoes:
+    post:
+      tags: [Solicitações]
+      summary: Envia uma solicitação de contato a um fornecedor para a festa
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdNumerico"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SolicitacaoInput"
+      responses:
+        "201":
+          description: Solicitação criada como PENDENTE
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Solicitacao"
+        "400":
+          $ref: "#/components/responses/DadosInvalidos"
+        "401":
+          $ref: "#/components/responses/NaoAutenticado"
+        "403":
+          $ref: "#/components/responses/SemPermissao"
+        "404":
+          $ref: "#/components/responses/NaoEncontrado"
+        "409":
+          description: "`SERVICO_NAO_OFERECIDO` ou `SOLICITACAO_DUPLICADA`"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErroPadrao"
+
+  /solicitacoes/recebidas:
+    get:
+      tags: [Solicitações]
+      summary: Lista solicitações recebidas pelo fornecedor autenticado
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [PENDENTE, ACEITA, RECUSADA, CANCELADA]
+      responses:
+        "200":
+          description: Lista de solicitações recebidas com dados da festa e do cliente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SolicitacaoRecebida"
+        "400":
+          $ref: "#/components/responses/DadosInvalidos"
+        "401":
+          $ref: "#/components/responses/NaoAutenticado"
+        "403":
+          $ref: "#/components/responses/SemPermissao"
+
+  /solicitacoes/{id}/responder:
+    patch:
+      tags: [Solicitações]
+      summary: Aceita ou recusa uma solicitação pendente
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdNumerico"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResponderSolicitacaoInput"
+      responses:
+        "200":
+          description: Solicitação respondida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Solicitacao"
+        "400":
+          $ref: "#/components/responses/DadosInvalidos"
+        "401":
+          $ref: "#/components/responses/NaoAutenticado"
+        "403":
+          $ref: "#/components/responses/SemPermissao"
+        "404":
+          $ref: "#/components/responses/NaoEncontrado"
+        "409":
+          description: "`JA_RESPONDIDA` ou `DATA_OCUPADA`"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErroPadrao"
+
+  /solicitacoes/{id}/cancelar:
+    patch:
+      tags: [Solicitações]
+      summary: Cliente cancela uma solicitação da sua festa
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdNumerico"
+      responses:
+        "200":
+          description: Solicitação cancelada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Solicitacao"
+        "400":
+          $ref: "#/components/responses/DadosInvalidos"
+        "401":
+          $ref: "#/components/responses/NaoAutenticado"
+        "403":
+          $ref: "#/components/responses/SemPermissao"
+        "404":
+          $ref: "#/components/responses/NaoEncontrado"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdNumerico:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+
+  responses:
+    DadosInvalidos:
+      description: Dados inválidos (`DADOS_INVALIDOS`)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErroPadrao"
+    NaoAutenticado:
+      description: Token ausente/inválido ou credenciais inválidas (`NAO_AUTENTICADO`)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErroPadrao"
+    SemPermissao:
+      description: Perfil sem permissão ou recurso de outro usuário (`SEM_PERMISSAO`)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErroPadrao"
+    NaoEncontrado:
+      description: Recurso não encontrado (`NAO_ENCONTRADO`)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErroPadrao"
+
+  schemas:
+    ErroPadrao:
+      type: object
+      required: [erro, mensagem]
+      properties:
+        erro:
+          type: string
+          example: DATA_OCUPADA
+        mensagem:
+          type: string
+          example: Você já aceitou outra festa na data 2026-12-12.
+
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+        email:
+          type: string
+          format: email
+        telefone:
+          type: string
+          nullable: true
+        perfil:
+          type: string
+          enum: [cliente, fornecedor]
+        criado_em:
+          type: string
+          format: date-time
+
+    RegistroInput:
+      type: object
+      required: [nome, email, senha, perfil]
+      properties:
+        nome:
+          type: string
+          maxLength: 120
+        email:
+          type: string
+          format: email
+          maxLength: 120
+        telefone:
+          type: string
+          nullable: true
+          maxLength: 30
+        senha:
+          type: string
+          minLength: 6
+        perfil:
+          type: string
+          enum: [cliente, fornecedor]
+
+    LoginInput:
+      type: object
+      required: [email, senha]
+      properties:
+        email:
+          type: string
+          format: email
+        senha:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        usuario:
+          $ref: "#/components/schemas/Usuario"
+
+    Categoria:
+      type: object
+      properties:
+        id:
+          type: integer
+        nome:
+          type: string
+
+    Fornecedor:
+      type: object
+      properties:
+        id:
+          type: integer
+        usuario_id:
+          type: integer
+        nome_empresa:
+          type: string
+        descricao:
+          type: string
+          nullable: true
+        cidade:
+          type: string
+          nullable: true
+        telefone_contato:
+          type: string
+        whatsapp:
+          type: string
+          nullable: true
+        email_contato:
+          type: string
+          nullable: true
+        ativo:
+          type: boolean
+
+    FornecedorServico:
+      type: object
+      properties:
+        id:
+          type: integer
+        fornecedor_id:
+          type: integer
+        categoria_id:
+          type: integer
+        categoria_nome:
+          type: string
+        descricao:
+          type: string
+          nullable: true
+        preco_referencia:
+          type: string
+          nullable: true
+
+    FornecedorComServicos:
+      allOf:
+        - $ref: "#/components/schemas/Fornecedor"
+        - type: object
+          properties:
+            servicos:
+              type: array
+              items:
+                $ref: "#/components/schemas/FornecedorServico"
+
+    PerfilFornecedorInput:
+      type: object
+      required: [nome_empresa, telefone_contato]
+      properties:
+        nome_empresa:
+          type: string
+          maxLength: 120
+        descricao:
+          type: string
+          nullable: true
+        cidade:
+          type: string
+          nullable: true
+          maxLength: 80
+        telefone_contato:
+          type: string
+          maxLength: 30
+        whatsapp:
+          type: string
+          nullable: true
+          maxLength: 30
+        email_contato:
+          type: string
+          nullable: true
+          maxLength: 120
+
+    ServicoInput:
+      type: object
+      required: [categoria_id]
+      properties:
+        categoria_id:
+          type: integer
+        descricao:
+          type: string
+          nullable: true
+        preco_referencia:
+          type: string
+          nullable: true
+          maxLength: 80
+
+    ServicoEdicaoInput:
+      type: object
+      properties:
+        descricao:
+          type: string
+          nullable: true
+        preco_referencia:
+          type: string
+          nullable: true
+          maxLength: 80
+
+    Festa:
+      type: object
+      properties:
+        id:
+          type: integer
+        cliente_id:
+          type: integer
+        titulo:
+          type: string
+        data:
+          type: string
+          format: date
+          example: "2026-12-12"
+        hora_inicio:
+          type: string
+          example: "14:00:00"
+        hora_fim:
+          type: string
+          example: "19:00:00"
+        local:
+          type: string
+          nullable: true
+        qtd_convidados:
+          type: integer
+          nullable: true
+        tema:
+          type: string
+          nullable: true
+        observacoes:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [PLANEJANDO, CONCLUIDA, CANCELADA]
+
+    FestaInput:
+      type: object
+      required: [titulo, data, hora_inicio, hora_fim]
+      properties:
+        titulo:
+          type: string
+          maxLength: 120
+        data:
+          type: string
+          format: date
+          example: "2026-12-12"
+        hora_inicio:
+          type: string
+          pattern: "^([01]\\d|2[0-3]):[0-5]\\d(:[0-5]\\d)?$"
+          example: "14:00"
+        hora_fim:
+          type: string
+          pattern: "^([01]\\d|2[0-3]):[0-5]\\d(:[0-5]\\d)?$"
+          example: "19:00"
+        local:
+          type: string
+          nullable: true
+          maxLength: 200
+        qtd_convidados:
+          type: integer
+          nullable: true
+          minimum: 1
+        tema:
+          type: string
+          nullable: true
+          maxLength: 80
+        observacoes:
+          type: string
+          nullable: true
+
+    FestaEdicaoInput:
+      allOf:
+        - $ref: "#/components/schemas/FestaInput"
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [PLANEJANDO, CONCLUIDA]
+
+    Solicitacao:
+      type: object
+      properties:
+        id:
+          type: integer
+        festa_id:
+          type: integer
+        fornecedor_id:
+          type: integer
+        categoria_id:
+          type: integer
+        mensagem:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [PENDENTE, ACEITA, RECUSADA, CANCELADA]
+        resposta:
+          type: string
+          nullable: true
+        criado_em:
+          type: string
+          format: date-time
+        respondido_em:
+          type: string
+          format: date-time
+          nullable: true
+
+    SolicitacaoFesta:
+      allOf:
+        - $ref: "#/components/schemas/Solicitacao"
+        - type: object
+          properties:
+            fornecedor_nome:
+              type: string
+            telefone_contato:
+              type: string
+            whatsapp:
+              type: string
+              nullable: true
+            email_contato:
+              type: string
+              nullable: true
+            categoria_nome:
+              type: string
+
+    FestaDetalhe:
+      allOf:
+        - $ref: "#/components/schemas/Festa"
+        - type: object
+          properties:
+            stack:
+              type: array
+              items:
+                type: object
+                properties:
+                  categoria_id:
+                    type: integer
+                  categoria_nome:
+                    type: string
+            solicitacoes:
+              type: array
+              items:
+                $ref: "#/components/schemas/SolicitacaoFesta"
+
+    SolicitacaoInput:
+      type: object
+      required: [fornecedor_id, categoria_id]
+      properties:
+        fornecedor_id:
+          type: integer
+        categoria_id:
+          type: integer
+        mensagem:
+          type: string
+          nullable: true
+
+    SolicitacaoRecebida:
+      allOf:
+        - $ref: "#/components/schemas/Solicitacao"
+        - type: object
+          properties:
+            categoria_nome:
+              type: string
+            festa_titulo:
+              type: string
+            festa_data:
+              type: string
+              format: date
+            hora_inicio:
+              type: string
+            hora_fim:
+              type: string
+            local:
+              type: string
+              nullable: true
+            qtd_convidados:
+              type: integer
+              nullable: true
+            tema:
+              type: string
+              nullable: true
+            cliente_nome:
+              type: string
+            cliente_email:
+              type: string
+            cliente_telefone:
+              type: string
+              nullable: true
+
+    ResponderSolicitacaoInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ACEITA, RECUSADA]
+        resposta:
+          type: string
+          nullable: true
