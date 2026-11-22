@@ -1,39 +1,59 @@
 import { useAuth } from '../context/AuthContext';
 import { Link } from '../router';
-import { Layout } from './Layout';
+import { LayoutPagsInicio } from './LayoutPagsInicio';
+import '../../static/css/RotaProtegida.css';
 
 export function RotaProtegida({ perfilPermitido, children }) {
   const { usuario, carregando } = useAuth();
 
   if (carregando) {
     return (
-      <Layout titulo="Carregando">
-        <p>Verificando sessão...</p>
-      </Layout>
+      <LayoutPagsInicio titulo="Carregando">
+        <main className="protegida-container">
+          <p className="protegida-loading">Verificando sessão...</p>
+        </main>
+      </LayoutPagsInicio>
     );
   }
 
   if (!usuario) {
     return (
-      <Layout titulo="Acesso restrito">
-        <p>Você precisa estar autenticado para acessar esta página.</p>
-        <p>
-          <Link to="/login">Ir para Login</Link> | <Link to="/cadastro">Criar conta</Link>
-        </p>
-      </Layout>
+      <LayoutPagsInicio titulo="Acesso restrito">
+        <main className="protegida-container">
+          <h1 className="protegida-titulo">Acesso Restrito</h1>
+          <p className="protegida-texto">
+            Você precisa estar autenticado para acessar esta página.
+          </p>
+          <div className="protegida-links">
+            <Link to="/login" className="protegida-link">
+              Ir para Login
+            </Link>
+            <span className="protegida-separador">|</span>
+            <Link to="/cadastro" className="protegida-link">
+              Criar Conta
+            </Link>
+          </div>
+        </main>
+      </LayoutPagsInicio>
     );
   }
 
   if (perfilPermitido && usuario.perfil !== perfilPermitido) {
     return (
-      <Layout titulo="Sem permissão">
-        <p>
-          Esta página é exclusiva para usuários do perfil <strong>{perfilPermitido}</strong>.
-        </p>
-        <p>
-          <Link to="/catalogo">Voltar ao catálogo</Link>
-        </p>
-      </Layout>
+      <LayoutPagsInicio titulo="Sem permissão">
+        <main className="protegida-container">
+          <h1 className="protegida-titulo">Sem permissão</h1>
+          <p className="protegida-texto">
+            Esta página é exclusiva para usuários do perfil{' '}
+            <strong>{perfilPermitido}</strong>.
+          </p>
+          <div className="protegida-links">
+            <Link to="/catalogo" className="protegida-link">
+              Voltar ao catálogo
+            </Link>
+          </div>
+        </main>
+      </LayoutPagsInicio>
     );
   }
 
