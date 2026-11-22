@@ -10,6 +10,8 @@ import { Pedidos } from './pages/Pedidos';
 import { PerfilFornecedor } from './pages/PerfilFornecedor';
 import { StackDaFesta } from './pages/StackDaFesta';
 import { combinarRota, Link, RouterProvider, useRouter } from './router';
+import { LayoutPagsInicio } from './components/LayoutPagsInicio';
+import '../static/css/PaginaNaoEncontrada.css';
 
 function ConteudoRotas() {
   const { caminho } = useRouter();
@@ -63,12 +65,25 @@ function ConteudoRotas() {
   }
 
   return (
-    <Layout titulo="Página não encontrada">
-      <p>A rota "{caminho}" não existe.</p>
-      <p>
-        <Link to="/catalogo">Ir para o catálogo</Link>
-      </p>
-    </Layout>
+    <LayoutPagsInicio>
+      <div className="nao-encontrada-container">
+
+        <h2 className="nao-encontrada-titulo">
+          Página não encontrada
+        </h2>
+
+        <p className="nao-encontrada-texto">
+          A rota <span className="nao-encontrada-rota">"{caminho}"</span> não existe.
+        </p>
+
+        <div className="nao-encontrada-acoes">
+          <Link to="/catalogo" className="nao-encontrada-link">
+            Voltar para o catálogo
+          </Link>
+        </div>
+
+      </div>
+    </LayoutPagsInicio>
   );
 }
 
