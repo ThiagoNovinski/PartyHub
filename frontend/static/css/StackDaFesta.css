@@ -1,0 +1,504 @@
+.stack-festa-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.stack-page-title {
+  font-family: 'Chewy', cursive, sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: #43446b;
+  margin: 0 0 10px 0;
+  letter-spacing: -0.2px;
+}
+
+.stack-voltar-row {
+  margin: 0 0 28px 0;
+}
+
+.stack-link-voltar {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #43446b;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.stack-link-voltar:hover {
+  color: #d82b5a;
+}
+
+.stack-secao {
+  margin-bottom: 24px;
+}
+
+.stack-secao-titulo {
+  font-size: 16px;
+  font-weight: 800;
+  color: #43446b;
+  margin: 0 0 16px 0;
+}
+
+.stack-dados-detalhes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.stack-linha-detalhe {
+  font-size: 14px;
+  color: #555877;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.detalhe-rotulo {
+  font-weight: 700;
+  color: #43446b;
+}
+
+.stack-acoes-festa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.btn-pilula-magenta {
+  height: 32px;
+  padding: 0 22px;
+  border: none;
+  border-radius: 9999px;
+  background-color: #d82b5a;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-pilula-magenta:hover {
+  background-color: #bf1d48;
+}
+
+.btn-pilula-magenta.btn-sm,
+.btn-pilula-magenta-btn-sm {
+  height: 28px;
+  padding: 0 16px;
+  font-size: 12px;
+  border: none;
+  border-radius: 9999px;
+  background-color: #d82b5a;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-pilula-magenta.btn-sm:hover,
+.btn-pilula-magenta-btn-sm:hover {
+  background-color: #bf1d48;
+}
+
+.btn-pilula-remover {
+  height: 28px;
+  padding: 0 16px;
+  border: 1.5px solid #d82b5a;
+  border-radius: 9999px;
+  background-color: #ffffff;
+  color: #d82b5a;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-pilula-remover:hover {
+  background-color: #d82b5a;
+  color: #ffffff;
+}
+
+.btn-pilula-secundario {
+  height: 28px;
+  padding: 0 14px;
+  border: 1.5px solid #6b6e92;
+  border-radius: 9999px;
+  background-color: #ffffff;
+  color: #43446b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-pilula-secundario:hover {
+  border-color: #43446b;
+}
+
+/* Oculta categorias da Stack que já possuem solicitação */
+.stack-item-linha.stack-item-solicitado {
+  display: none !important;
+}
+
+.stack-divisor {
+  border: none;
+  border-top: 1.5px solid #d4d6e2;
+  margin: 24px 0;
+  width: 100%;
+}
+
+.stack-adicionar-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.stack-adicionar-label {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #43446b;
+}
+
+.stack-select-pilula,
+#stack-cat {
+  height: 32px;
+  min-width: 140px;
+  padding: 0 16px;
+  font-size: 13.5px;
+  font-weight: 500;
+  text-align: center;
+  color: #43446b;
+  background-color: #ffffff;
+  border: 1.5px solid #6b6e92;
+  border-radius: 9999px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stack-select-pilula:focus,
+#stack-cat:focus {
+  border-color: #d82b5a;
+  box-shadow: 0 0 0 2px rgba(216, 43, 90, 0.15);
+}
+
+.stack-select-pilula,
+.stack-input-pilula {
+  height: 32px;
+  min-width: 180px;
+  padding: 0 16px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #43446b;
+  background-color: #ffffff;
+  border: 1.5px solid #6b6e92;
+  border-radius: 9999px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.stack-select-pilula:focus,
+.stack-input-pilula:focus {
+  border-color: #d82b5a;
+}
+
+.stack-aviso-vazio {
+  font-size: 14px;
+  color: #555877;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.stack-info-msg {
+  font-size: 14px;
+  color: #555877;
+}
+
+.stack-lista-itens {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stack-item-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  background-color: #fcfdfe;
+  border: 1px solid #e7e9f2;
+  border-radius: 8px;
+}
+
+.stack-item-info {
+  font-size: 14px;
+  color: #43446b;
+}
+
+.stack-item-botoes {
+  display: flex;
+  gap: 8px;
+}
+
+.stack-busca-resultado {
+  margin-top: 20px;
+  padding: 18px;
+  background-color: #f8f9fd;
+  border-radius: 12px;
+  border: 1px solid #e1e4f0;
+}
+
+.subtitulo-busca {
+  font-size: 15px;
+  font-weight: 700;
+  color: #43446b;
+  margin: 0 0 12px 0;
+}
+
+.stack-busca-filtro-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.stack-aviso-busca {
+  font-size: 14px;
+  color: #555877;
+  line-height: 1.6;
+}
+
+.stack-aviso-busca p {
+  margin: 6px 0;
+}
+
+.stack-fornecedores-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fornecedor-card-item {
+  background-color: #ffffff;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e4ef;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.forn-info-topo {
+  font-size: 14.5px;
+  color: #43446b;
+}
+
+.forn-detalhes-texto {
+  font-size: 13.5px;
+  color: #555877;
+}
+
+.stack-link-underline {
+  font-size: 13px;
+  font-weight: 700;
+  color: #43446b;
+  text-decoration: underline;
+}
+
+.stack-link-underline:hover {
+  color: #d82b5a;
+}
+
+.forn-solicitar-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.forn-input-msg {
+  flex: 1;
+  max-width: 380px;
+}
+
+.forn-ja-solicitado {
+  font-size: 13px;
+  color: #6b6e92;
+}
+
+.stack-solicitacoes-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.solicitacao-item-card {
+  padding: 14px;
+  border: 1px solid #e5e7f0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.solicitacao-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #43446b;
+}
+
+.solic-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.badge-pendente {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+.badge-aceita {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.badge-recusada,
+.badge-cancelada {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.solic-contatos,
+.solic-mensagem,
+.solic-resposta {
+  font-size: 13.5px;
+  color: #555877;
+  margin: 0;
+}
+
+.stack-form-edicao {
+  margin-top: 18px;
+  padding: 18px;
+  background-color: #f9fafd;
+  border: 1px solid #e1e4f0;
+  border-radius: 12px;
+}
+
+.subtitulo-edicao {
+  font-size: 15px;
+  font-weight: 700;
+  color: #43446b;
+  margin: 0 0 14px 0;
+}
+
+.form-edicao-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.form-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-campo label {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #43446b;
+}
+
+.form-campo input,
+.form-campo select {
+  height: 32px;
+  padding: 0 14px;
+  border: 1.5px solid #6b6e92;
+  border-radius: 9999px;
+  outline: none;
+  font-size: 13.5px;
+  box-sizing: border-box;
+}
+
+.form-campo textarea {
+  padding: 8px 14px;
+  border: 1.5px solid #6b6e92;
+  border-radius: 14px;
+  outline: none;
+  font-family: inherit;
+  font-size: 13.5px;
+  resize: vertical;
+}
+
+.form-campo-full {
+  grid-column: 1 / -1;
+}
+
+.form-edicao-acoes {
+  margin-top: 14px;
+}
+
+.msg-feedback {
+  font-size: 14px;
+  margin: 0 0 16px 0;
+}
+
+.msg-sucesso {
+  color: #1b8a36;
+  font-weight: 600;
+}
+
+.msg-erro {
+  color: #d82b5a;
+}
+
+@media (max-width: 680px) {
+  .stack-adicionar-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .stack-select-pilula,
+  .btn-pilula-magenta {
+    width: 100%;
+  }
+
+  .stack-item-linha {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
