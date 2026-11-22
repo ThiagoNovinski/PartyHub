@@ -1,0 +1,53 @@
+.nao-encontrada-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0;
+  padding: 40px 0 0 0;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.nao-encontrada-titulo {
+  font-family: "Chewy";
+  font-size: 24px;
+  font-weight: 800;
+  color: #43446b;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.3px;
+}
+
+
+.nao-encontrada-texto {
+  font-size: 14.5px;
+  color: #555877;
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.nao-encontrada-rota {
+  color: #43446b;
+  font-weight: 600;
+}
+
+.nao-encontrada-acoes {
+  display: flex;
+  align-items: center;
+}
+
+.nao-encontrada-link {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #43446b;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.nao-encontrada-link:hover {
+  color: #d82b5a;
+}
+
+@media (max-width: 600px) {
+  .nao-encontrada-container {
+    padding: 24px 0 0 0;
+  }
+}
