@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Layout } from '../components/Layout';
+import { LayoutPagsInicio } from '../components/LayoutPagsInicio';
 import { useAuth } from '../context/AuthContext';
 import { Link } from '../router';
 import { api } from '../services/api';
+import '../../static/css/DetalheFornecedor.css';
 
 export function DetalheFornecedor({ id }) {
   const { usuario } = useAuth();
@@ -85,90 +86,103 @@ export function DetalheFornecedor({ id }) {
   }
 
   return (
-    <Layout titulo={fornecedor ? fornecedor.nome_empresa : 'Detalhes do Fornecedor'}>
-      <p>
-        <Link to="/catalogo">Voltar ao catálogo</Link>
-      </p>
-
-      {carregando && <p>Carregando...</p>}
-      {erro && (
-        <p role="alert">
-          <strong>Erro:</strong> {erro}
-        </p>
-      )}
-
-      {!carregando && fornecedor && (
-        <>
-          <p>
-            <strong>Status:</strong> {fornecedor.ativo ? 'Ativo' : 'Inativo'}
+    <LayoutPagsInicio titulo={fornecedor ? fornecedor.nome_empresa : 'Detalhes do Fornecedor'}>
+      <main className="detalhes-fornecedor-container">
+        {carregando && <p className="detalhes-info-msg">Carregando...</p>}
+        {erro && (
+          <p role="alert" className="msg-feedback msg-erro">
+            <strong>Erro:</strong> {erro}
           </p>
-          <p>
-            <strong>Cidade:</strong> {fornecedor.cidade || 'Não informada'}
-          </p>
-          <p>
-            <strong>Descrição:</strong> {fornecedor.descricao || 'Sem descrição.'}
-          </p>
+        )}
 
-          <h3>Contatos</h3>
-          <ul>
-            <li>
-              <strong>Telefone:</strong> {fornecedor.telefone_contato}
-            </li>
-            <li>
-              <strong>WhatsApp:</strong> {fornecedor.whatsapp || 'Não informado'}
-            </li>
-            <li>
-              <strong>E-mail:</strong> {fornecedor.email_contato || 'Não informado'}
-            </li>
-          </ul>
+        {!carregando && fornecedor && (
+          <div className="detalhes-fornecedor-card">
+            <h1 className="fornecedor-nome-titulo">
+              <span className="bullet-ponto">•</span> {fornecedor.nome_empresa}
+            </h1>
 
-          <h3>Serviços oferecidos</h3>
-          {fornecedor.servicos.length === 0 ? (
-            <p>Nenhum serviço cadastrado.</p>
-          ) : (
-            <ul>
-              {fornecedor.servicos.map((s) => (
-                <li key={s.id}>
-                  <strong>{s.categoria_nome}</strong>
-                  {s.preco_referencia ? ` (${s.preco_referencia})` : ''}
-                  {s.descricao ? ` — ${s.descricao}` : ''}
+            <div className="fornecedor-voltar-box">
+              <Link to="/catalogo" className="btn-voltar-catalogo">
+                Voltar ao catálogo
+              </Link>
+            </div>
+
+            <div className="fornecedor-info-bloco">
+              <p className="info-linha">
+                <strong className="info-rotulo">Status:</strong>{' '}
+                <span className={fornecedor.ativo ? 'status-ativo' : 'status-inativo'}>
+                  {fornecedor.ativo ? 'Ativo' : 'Inativo'}
+                </span>
+              </p>
+              <p className="info-linha">
+                <strong className="info-rotulo">Cidade:</strong> {fornecedor.cidade || 'Não informada'}
+              </p>
+              <p className="info-linha">
+                <strong className="info-rotulo">Descrição:</strong> {fornecedor.descricao || 'Sem descrição.'}
+              </p>
+            </div>
+
+            <section className="fornecedor-secao">
+              <h2 className="fornecedor-secao-titulo">Contatos</h2>
+              <ul className="fornecedor-bullets-lista">
+                <li>
+                  <strong>Telefone:</strong> {fornecedor.telefone_contato || 'Não informado'}
                 </li>
-              ))}
-            </ul>
-          )}
+                <li>
+                  <strong>WhatsApp:</strong> {fornecedor.whatsapp || 'Não informado'}
+                </li>
+                <li>
+                  <strong>E-mail:</strong> {fornecedor.email_contato || 'Não informado'}
+                </li>
+              </ul>
+            </section>
 
-          {usuario?.perfil === 'cliente' &&
-            fornecedor.ativo &&
-            fornecedor.servicos.length > 0 && (
-              <>
-                <hr />
-                <h3>Solicitar contato para uma festa</h3>
-                {festas.length === 0 ? (
-                  <p>
-                    Você não possui festas em planejamento.{' '}
-                    <Link to="/festas">Cadastrar festa</Link>
-                  </p>
-                ) : (
-                  <form onSubmit={aoSolicitar}>
-                    <div>
-                      <label htmlFor="sol-festa">Festa: </label>
+            <section className="fornecedor-secao">
+              <h2 className="fornecedor-secao-titulo">Serviços oferecidos</h2>
+              {fornecedor.servicos?.length === 0 ? (
+                <p className="fornecedor-aviso-vazio">Nenhum serviço cadastrado.</p>
+              ) : (
+                <ul className="fornecedor-bullets-lista">
+                  {fornecedor.servicos.map((s) => (
+                    <li key={s.id}>
+                      <strong>{s.categoria_nome}</strong>
+                      {s.preco_referencia ? ` (a partir de ${s.preco_referencia})` : ''}
+                      {s.descricao ? ` - ${s.descricao}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            {usuario?.perfil === 'cliente' &&
+              fornecedor.ativo &&
+              fornecedor.servicos?.length > 0 &&
+              festas.length > 0 && (
+                <section className="fornecedor-secao secao-solicitar-contato">
+                  <h2 className="fornecedor-secao-titulo">Solicitar contato para uma festa</h2>
+
+                  <form onSubmit={aoSolicitar} className="form-solicitar-contato">
+                    <div className="form-linha-pilula">
+                      <label htmlFor="sol-festa">Festa:</label>
                       <select
                         id="sol-festa"
+                        className="input-select-pilula"
                         value={festaId}
                         onChange={(e) => setFestaId(e.target.value)}
                       >
                         {festas.map((f) => (
                           <option key={f.id} value={f.id}>
-                            {f.titulo} ({f.data})
+                            {f.titulo} {f.data ? `(${f.data})` : ''}
                           </option>
                         ))}
                       </select>
                     </div>
-                    <br />
-                    <div>
-                      <label htmlFor="sol-categoria">Serviço / Categoria: </label>
+
+                    <div className="form-linha-pilula">
+                      <label htmlFor="sol-categoria">Serviço / Categoria:</label>
                       <select
                         id="sol-categoria"
+                        className="input-select-pilula"
                         value={categoriaId}
                         onChange={(e) => setCategoriaId(e.target.value)}
                       >
@@ -179,39 +193,48 @@ export function DetalheFornecedor({ id }) {
                         ))}
                       </select>
                     </div>
-                    <br />
-                    <div>
+
+                    <div className="form-linha-pilula form-linha-textarea">
                       <label htmlFor="sol-mensagem">Mensagem (opcional):</label>
-                      <br />
                       <textarea
                         id="sol-mensagem"
-                        rows={3}
-                        cols={40}
+                        className="textarea-pilula"
+                        rows={2}
                         value={mensagem}
                         onChange={(e) => setMensagem(e.target.value)}
                       />
                     </div>
-                    <br />
+
                     {erroSolicitacao && (
-                      <p role="alert">
+                      <p role="alert" className="msg-feedback msg-erro">
                         <strong>Erro:</strong> {erroSolicitacao}
                       </p>
                     )}
+
                     {sucessoSolicitacao && (
-                      <p>
+                      <p className="msg-feedback msg-sucesso">
                         {sucessoSolicitacao}{' '}
-                        <Link to={`/festas/${festaId}`}>Ver stack da festa</Link>
+                        <Link to={`/festas/${festaId}`} className="link-stack">
+                          Ver stack da festa
+                        </Link>
                       </p>
                     )}
-                    <button type="submit" disabled={enviando}>
-                      {enviando ? 'Enviando...' : 'Solicitar contato'}
-                    </button>
+
+                    <div className="form-acoes-centro">
+                      <button
+                        type="submit"
+                        className="btn-solicitar-magenta"
+                        disabled={enviando}
+                      >
+                        {enviando ? 'Enviando...' : 'Solicitar contato'}
+                      </button>
+                    </div>
                   </form>
-                )}
-              </>
-            )}
-        </>
-      )}
-    </Layout>
+                </section>
+              )}
+          </div>
+        )}
+      </main>
+    </LayoutPagsInicio>
   );
 }

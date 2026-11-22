@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Layout } from '../components/Layout';
+import { LayoutLogin } from '../components/LayoutLogin';
 import { useAuth } from '../context/AuthContext';
 import { Link, useRouter } from '../router';
 import { MENSAGEM_SENHA_INVALIDA, validarSenha } from '../utils/validarSenha';
+import '../../static/css/Cadastro.css';
 
 export function Cadastro() {
   const { usuario, registrar } = useAuth();
@@ -53,84 +54,85 @@ export function Cadastro() {
   }
 
   return (
-    <Layout titulo="Cadastro">
-      <form onSubmit={aoEnviar}>
-        <div>
-          <label htmlFor="cad-nome">Nome</label>
-          <br />
-          <input
-            id="cad-nome"
-            type="text"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            maxLength={120}
-            required
-          />
-        </div>
-        <br />
-        <div>
-          <label htmlFor="cad-email">E-mail</label>
-          <br />
-          <input
-            id="cad-email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            maxLength={120}
-            required
-          />
-        </div>
-        <br />
-        <div>
-          <label htmlFor="cad-telefone">Telefone (opcional)</label>
-          <br />
-          <input
-            id="cad-telefone"
-            type="text"
-            value={telefone}
-            onChange={(e) => setTelefone(e.target.value)}
-            maxLength={30}
-          />
-        </div>
-        <br />
-        <div>
-          <label htmlFor="cad-senha">Senha (mínimo 6 caracteres)</label>
-          <br />
-          <input
-            id="cad-senha"
-            type="password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            minLength={6}
-            required
-          />
-        </div>
-        <br />
-        <div>
-          <label htmlFor="cad-perfil">Perfil</label>
-          <br />
-          <select
-            id="cad-perfil"
-            value={perfil}
-            onChange={(e) => setPerfil(e.target.value)}
-          >
-            <option value="cliente">Cliente (organizo festas)</option>
-            <option value="fornecedor">Fornecedor (ofereço serviços)</option>
-          </select>
-        </div>
-        <br />
-        {erro && (
-          <p role="alert">
-            <strong>Erro:</strong> {erro}
-          </p>
-        )}
-        <button type="submit" disabled={enviando}>
-          {enviando ? 'Cadastrando...' : 'Cadastre-se'}
-        </button>
-      </form>
-      <p>
-        Já tem conta? <Link to="/login">Entrar</Link>
-      </p>
-    </Layout>
+    <LayoutLogin titulo="Cadastro">
+      <main className="cadastro-container">
+        <p className="subtitle">Inscreva-se no PartyHub!</p>
+
+        <form onSubmit={aoEnviar}>
+          <div className="field">
+            <label htmlFor="cad-nome">Nome</label>
+            <input
+              id="cad-nome"
+              type="text"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              maxLength={120}
+              required
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="cad-email">Email</label>
+            <input
+              id="cad-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              maxLength={120}
+              required
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="cad-telefone">Telefone (opcional)</label>
+            <input
+              id="cad-telefone"
+              type="text"
+              value={telefone}
+              onChange={(e) => setTelefone(e.target.value)}
+              maxLength={30}
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="cad-senha">Senha (mínimo 6 caracteres)</label>
+            <input
+              id="cad-senha"
+              type="password"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              minLength={6}
+              required
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="cad-perfil">Perfil</label>
+            <select
+              id="cad-perfil"
+              value={perfil}
+              onChange={(e) => setPerfil(e.target.value)}
+            >
+              <option value="cliente">Cliente (organizo festas)</option>
+              <option value="fornecedor">Fornecedor (ofereço serviços)</option>
+            </select>
+          </div>
+
+          {erro && (
+            <p role="alert">
+              <strong>Erro:</strong> {erro}
+            </p>
+          )}
+
+          <button type="submit" disabled={enviando}>
+            {enviando ? 'Cadastrando...' : 'Cadastre-se'}
+          </button>
+        </form>
+
+        <p className="tem-conta">
+          Já possui cadastro? <Link to="/login">Entrar</Link>
+        </p>
+      </main>
+    </LayoutLogin>
   );
 }

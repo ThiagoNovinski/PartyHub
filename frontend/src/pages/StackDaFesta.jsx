@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { InputHora24h } from '../components/InputHora24h';
-import { Layout } from '../components/Layout';
+import { LayoutPagsInicio } from '../components/LayoutPagsInicio';
 import { Link } from '../router';
 import { api } from '../services/api';
 import { filtrarFornecedoresPorLocal } from '../utils/filtrarFornecedores';
+import '../../static/css/StackDaFesta.css';
 
 function chaveStackLocal(festaId) {
   return `partyhub_stack_local_${festaId}`;
@@ -96,6 +97,16 @@ export function StackDaFesta({ id }) {
       categoria_nome,
     }));
   }, [festa, stackLocalIds, categorias]);
+
+  // Filtra as categorias ativas que ainda NÃO possuem solicitações enviadas
+  const categoriasSemSolicitacao = useMemo(() => {
+    return categoriasDaStack.filter((cat) => {
+      const temSolicitacao = (festa?.solicitacoes || []).some(
+        (s) => s.categoria_id === cat.categoria_id,
+      );
+      return !temSolicitacao;
+    });
+  }, [categoriasDaStack, festa?.solicitacoes]);
 
   function salvarStackLocal(novosIds) {
     setStackLocalIds(novosIds);
@@ -221,295 +232,318 @@ export function StackDaFesta({ id }) {
     categorias.find((c) => c.id === categoriaBuscaAtiva)?.nome || '';
 
   return (
-    <Layout titulo={festa ? `Festa: ${festa.titulo}` : 'Stack da Festa'}>
-      <p>
-        <Link to="/festas">Voltar para Minhas Festas</Link>
-      </p>
-
-      {erro && (
-        <p role="alert">
-          <strong>Erro:</strong> {erro}
+    <LayoutPagsInicio titulo={festa ? `Festa: ${festa.titulo}` : 'Stack da Festa'}>
+      <main className="stack-festa-container">
+        <h1 className="stack-page-title">
+          Festa: {festa ? festa.titulo : 'nome cadastrado para a festa'}
+        </h1>
+        <p className="stack-voltar-row">
+          <Link to="/festas" className="stack-link-voltar">
+            Voltar para Minhas Festas
+          </Link>
         </p>
-      )}
-      {mensagemStatus && <p>{mensagemStatus}</p>}
-      {carregando && <p>Carregando dados da festa...</p>}
 
-      {!carregando && festa && (
-        <>
-          <section>
-            <h3>Detalhes da festa</h3>
-            <p>
-              <strong>Status:</strong> {festa.status}
-            </p>
-            <p>
-              <strong>Data:</strong> {festa.data} | <strong>Horário:</strong>{' '}
-              {String(festa.hora_inicio || '').slice(0, 5)} às{' '}
-              {String(festa.hora_fim || '').slice(0, 5)}
-            </p>
-            <p>
-              <strong>Local:</strong> {festa.local || 'Não informado'}
-            </p>
-            <p>
-              <strong>Convidados:</strong> {festa.qtd_convidados ?? 'Não informado'}
-            </p>
-            <p>
-              <strong>Tema:</strong> {festa.tema || 'Não informado'}
-            </p>
-            {festa.observacoes && (
-              <p>
-                <strong>Observações:</strong> {festa.observacoes}
-              </p>
-            )}
+        {erro && (
+          <p role="alert" className="msg-feedback msg-erro">
+            <strong>Erro:</strong> {erro}
+          </p>
+        )}
+        {mensagemStatus && <p className="msg-feedback msg-sucesso">{mensagemStatus}</p>}
+        {carregando && <p className="stack-info-msg">Carregando dados da festa...</p>}
 
-            {festa.status !== 'CANCELADA' && (
-              <p>
-                <button type="button" onClick={() => setEditando((v) => !v)}>
-                  {editando ? 'Fechar edição' : 'Editar festa'}
-                </button>{' '}
-                <button type="button" onClick={aoCancelarFesta}>
-                  Cancelar festa
-                </button>
-              </p>
-            )}
+        {!carregando && festa && (
+          <>
+            <section className="stack-secao">
+              <h2 className="stack-secao-titulo">Detalhes da festa</h2>
+              <div className="stack-dados-detalhes">
+                <p className="stack-linha-detalhe">
+                  <span className="detalhe-rotulo">Status:</span> {festa.status}
+                </p>
+                <p className="stack-linha-detalhe">
+                  <span className="detalhe-rotulo">Data:</span> {festa.data} |{' '}
+                  <span className="detalhe-rotulo">Horário:</span>{' '}
+                  {String(festa.hora_inicio || '').slice(0, 5)} às{' '}
+                  {String(festa.hora_fim || '').slice(0, 5)}
+                </p>
+                <p className="stack-linha-detalhe">
+                  <span className="detalhe-rotulo">Local:</span> {festa.local || 'local escolhido'}
+                </p>
+                <p className="stack-linha-detalhe">
+                  <span className="detalhe-rotulo">Convidados:</span>{' '}
+                  {festa.qtd_convidados ?? 'quantidade de convidados escolhidos'}
+                </p>
+                <p className="stack-linha-detalhe">
+                  <span className="detalhe-rotulo">Tema:</span> {festa.tema || 'tema escolhido'}
+                </p>
+                {festa.observacoes && (
+                  <p className="stack-linha-detalhe">
+                    <span className="detalhe-rotulo">Observações:</span> {festa.observacoes}
+                  </p>
+                )}
+              </div>
 
-            {editando && formEdicao && (
-              <form onSubmit={aoSalvarEdicao}>
-                <h4>Editar dados da festa</h4>
-                <div>
-                  <label htmlFor="ed-titulo">Título *</label>
-                  <br />
-                  <input
-                    id="ed-titulo"
-                    type="text"
-                    value={formEdicao.titulo}
-                    onChange={(e) =>
-                      setFormEdicao((p) => ({ ...p, titulo: e.target.value }))
-                    }
-                    required
-                  />
-                </div>
-                <br />
-                <div>
-                  <label htmlFor="ed-data">Data *</label>
-                  <br />
-                  <input
-                    id="ed-data"
-                    type="date"
-                    value={formEdicao.data}
-                    onChange={(e) =>
-                      setFormEdicao((p) => ({ ...p, data: e.target.value }))
-                    }
-                    required
-                  />
-                </div>
-                <br />
-                <div>
-                  <label htmlFor="ed-inicio">Hora início (24h) *</label>
-                  <br />
-                  <InputHora24h
-                    id="ed-inicio"
-                    value={formEdicao.hora_inicio}
-                    onChange={(valor) =>
-                      setFormEdicao((p) => ({ ...p, hora_inicio: valor }))
-                    }
-                    required
-                  />
-                </div>
-                <br />
-                <div>
-                  <label htmlFor="ed-fim">Hora término (24h) *</label>
-                  <br />
-                  <InputHora24h
-                    id="ed-fim"
-                    value={formEdicao.hora_fim}
-                    onChange={(valor) =>
-                      setFormEdicao((p) => ({ ...p, hora_fim: valor }))
-                    }
-                    required
-                  />
-                </div>
-                <br />
-                <div>
-                  <label htmlFor="ed-local">Local</label>
-                  <br />
-                  <input
-                    id="ed-local"
-                    type="text"
-                    value={formEdicao.local}
-                    onChange={(e) =>
-                      setFormEdicao((p) => ({ ...p, local: e.target.value }))
-                    }
-                  />
-                </div>
-                <br />
-                <div>
-                  <label htmlFor="ed-qtd">Convidados</label>
-                  <br />
-                  <input
-                    id="ed-qtd"
-                    type="number"
-                    min={1}
-                    value={formEdicao.qtd_convidados}
-                    onChange={(e) =>
-                      setFormEdicao((p) => ({
-                        ...p,
-                        qtd_convidados: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <br />
-                <div>
-                  <label htmlFor="ed-tema">Tema</label>
-                  <br />
-                  <input
-                    id="ed-tema"
-                    type="text"
-                    value={formEdicao.tema}
-                    onChange={(e) =>
-                      setFormEdicao((p) => ({ ...p, tema: e.target.value }))
-                    }
-                  />
-                </div>
-                <br />
-                <div>
-                  <label htmlFor="ed-obs">Observações</label>
-                  <br />
-                  <textarea
-                    id="ed-obs"
-                    rows={2}
-                    cols={40}
-                    value={formEdicao.observacoes}
-                    onChange={(e) =>
-                      setFormEdicao((p) => ({ ...p, observacoes: e.target.value }))
-                    }
-                  />
-                </div>
-                <br />
-                <div>
-                  <label htmlFor="ed-status">Status</label>
-                  <br />
-                  <select
-                    id="ed-status"
-                    value={formEdicao.status}
-                    onChange={(e) =>
-                      setFormEdicao((p) => ({ ...p, status: e.target.value }))
-                    }
-                  >
-                    <option value="PLANEJANDO">PLANEJANDO</option>
-                    <option value="CONCLUIDA">CONCLUIDA</option>
-                  </select>
-                </div>
-                <br />
-                <button type="submit">Salvar alterações</button>
-              </form>
-            )}
-          </section>
-
-          <hr />
-
-          <section>
-            <h3>Stack da Festa (Categorias de serviço)</h3>
-            {festa.status === 'PLANEJANDO' && (
-              <form onSubmit={aoAdicionarCategoriaNaStack}>
-                <label htmlFor="stack-cat">Adicionar categoria à stack: </label>
-                <select
-                  id="stack-cat"
-                  value={categoriaSelecionada}
-                  onChange={(e) => setCategoriaSelecionada(e.target.value)}
-                >
-                  {categorias.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nome}
-                    </option>
-                  ))}
-                </select>{' '}
-                <button type="submit">Adicionar e buscar fornecedores</button>
-              </form>
-            )}
-
-            {categoriasDaStack.length === 0 ? (
-              <p>
-                Nenhuma categoria na stack ainda. Escolha uma categoria acima para
-                montar a stack e buscar fornecedores.
-              </p>
-            ) : (
-              <ul>
-                {categoriasDaStack.map((cat) => {
-                  const solsDaCategoria = (festa.solicitacoes || []).filter(
-                    (s) => s.categoria_id === cat.categoria_id,
-                  );
-                  const jaNoBanco = (festa.stack || []).some(
-                    (s) => s.categoria_id === cat.categoria_id,
-                  );
-
-                  return (
-                    <li key={cat.categoria_id}>
-                      <strong>{cat.categoria_nome}</strong> —{' '}
-                      {solsDaCategoria.length === 0
-                        ? 'Sem solicitações enviadas'
-                        : solsDaCategoria
-                            .map((s) => `${s.fornecedor_nome}: ${s.status}`)
-                            .join('; ')}{' '}
-                      <button
-                        type="button"
-                        onClick={() =>
-                          buscarFornecedoresDaCategoria(cat.categoria_id)
-                        }
-                      >
-                        Buscar fornecedores
-                      </button>
-                      {!jaNoBanco && (
-                        <>
-                          {' '}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              aoRemoverCategoriaLocal(cat.categoria_id)
-                            }
-                          >
-                            Remover da lista
-                          </button>
-                        </>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-
-            {categoriaBuscaAtiva !== null && (
-              <div>
-                <h4>Fornecedores para: {nomeCategoriaAtiva}</h4>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    buscarFornecedoresDaCategoria(categoriaBuscaAtiva, cidadeFiltro);
-                  }}
-                >
-                  <label htmlFor="stack-cidade">Filtrar por cidade / local: </label>
-                  <input
-                    id="stack-cidade"
-                    type="text"
-                    value={cidadeFiltro}
-                    onChange={(e) => setCidadeFiltro(e.target.value)}
-                    placeholder="Ex.: Pelotas"
-                  />{' '}
-                  <button type="submit">Filtrar</button>{' '}
+              {festa.status !== 'CANCELADA' && (
+                <div className="stack-acoes-festa">
                   <button
                     type="button"
-                    onClick={() => {
-                      setCidadeFiltro('');
-                      buscarFornecedoresDaCategoria(categoriaBuscaAtiva, '');
-                    }}
+                    className="btn-pilula-magenta"
+                    onClick={() => setEditando((v) => !v)}
                   >
-                    Limpar
+                    {editando ? 'Fechar edição' : 'Editar festa'}
                   </button>
-                  {festa.local && (
-                    <>
-                      {' '}
+                  <button
+                    type="button"
+                    className="btn-pilula-magenta"
+                    onClick={aoCancelarFesta}
+                  >
+                    Cancelar festa
+                  </button>
+                </div>
+              )}
+
+              {editando && formEdicao && (
+                <form onSubmit={aoSalvarEdicao} className="stack-form-edicao">
+                  <h3 className="subtitulo-edicao">Editar dados da festa</h3>
+                  
+                  <div className="form-edicao-grid">
+                    <div className="form-campo">
+                      <label htmlFor="ed-titulo">Título *</label>
+                      <input
+                        id="ed-titulo"
+                        type="text"
+                        value={formEdicao.titulo}
+                        onChange={(e) =>
+                          setFormEdicao((p) => ({ ...p, titulo: e.target.value }))
+                        }
+                        required
+                      />
+                    </div>
+
+                    <div className="form-campo">
+                      <label htmlFor="ed-data">Data *</label>
+                      <input
+                        id="ed-data"
+                        type="date"
+                        value={formEdicao.data}
+                        onChange={(e) =>
+                          setFormEdicao((p) => ({ ...p, data: e.target.value }))
+                        }
+                        required
+                      />
+                    </div>
+
+                    <div className="form-campo">
+                      <label htmlFor="ed-inicio">Hora início (24h) *</label>
+                      <InputHora24h
+                        id="ed-inicio"
+                        value={formEdicao.hora_inicio}
+                        onChange={(valor) =>
+                          setFormEdicao((p) => ({ ...p, hora_inicio: valor }))
+                        }
+                        required
+                      />
+                    </div>
+
+                    <div className="form-campo">
+                      <label htmlFor="ed-fim">Hora término (24h) *</label>
+                      <InputHora24h
+                        id="ed-fim"
+                        value={formEdicao.hora_fim}
+                        onChange={(valor) =>
+                          setFormEdicao((p) => ({ ...p, hora_fim: valor }))
+                        }
+                        required
+                      />
+                    </div>
+
+                    <div className="form-campo">
+                      <label htmlFor="ed-local">Local</label>
+                      <input
+                        id="ed-local"
+                        type="text"
+                        value={formEdicao.local}
+                        onChange={(e) =>
+                          setFormEdicao((p) => ({ ...p, local: e.target.value }))
+                        }
+                      />
+                    </div>
+
+                    <div className="form-campo">
+                      <label htmlFor="ed-qtd">Convidados</label>
+                      <input
+                        id="ed-qtd"
+                        type="number"
+                        min={1}
+                        value={formEdicao.qtd_convidados}
+                        onChange={(e) =>
+                          setFormEdicao((p) => ({
+                            ...p,
+                            qtd_convidados: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+
+                    <div className="form-campo">
+                      <label htmlFor="ed-tema">Tema</label>
+                      <input
+                        id="ed-tema"
+                        type="text"
+                        value={formEdicao.tema}
+                        onChange={(e) =>
+                          setFormEdicao((p) => ({ ...p, tema: e.target.value }))
+                        }
+                      />
+                    </div>
+
+                    <div className="form-campo">
+                      <label htmlFor="ed-status">Status</label>
+                      <select
+                        id="ed-status"
+                        value={formEdicao.status}
+                        onChange={(e) =>
+                          setFormEdicao((p) => ({ ...p, status: e.target.value }))
+                        }
+                      >
+                        <option value="PLANEJANDO">PLANEJANDO</option>
+                        <option value="CONCLUIDA">CONCLUIDA</option>
+                      </select>
+                    </div>
+
+                    <div className="form-campo form-campo-full">
+                      <label htmlFor="ed-obs">Observações</label>
+                      <textarea
+                        id="ed-obs"
+                        rows={2}
+                        value={formEdicao.observacoes}
+                        onChange={(e) =>
+                          setFormEdicao((p) => ({ ...p, observacoes: e.target.value }))
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-edicao-acoes">
+                    <button type="submit" className="btn-pilula-magenta">
+                      Salvar alterações
+                    </button>
+                  </div>
+                </form>
+              )}
+            </section>
+
+            <hr className="stack-divisor" />
+
+            <section className="stack-secao">
+              <h2 className="stack-secao-titulo">Stack da Festa (Categorias de serviço)</h2>
+
+              {festa.status === 'PLANEJANDO' && (
+                <form onSubmit={aoAdicionarCategoriaNaStack} className="stack-adicionar-form">
+                  <label htmlFor="stack-cat" className="stack-adicionar-label">
+                    Adicionar categoria à stack:
+                  </label>
+                  <select
+                    id="stack-cat"
+                    className="stack-select-pilula"
+                    value={categoriaSelecionada}
+                    onChange={(e) => setCategoriaSelecionada(e.target.value)}
+                  >
+                    {categorias.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nome}
+                      </option>
+                    ))}
+                  </select>
+                  <button type="submit" className="btn-pilula-magenta">
+                    Adicionar e buscar fornecedores
+                  </button>
+                </form>
+              )}
+
+              {categoriasSemSolicitacao.length === 0 ? (
+                <p className="stack-aviso-vazio">
+                  Nenhuma categoria pendente de solicitação na stack. Adicione uma categoria acima para
+                  montar a stack e buscar fornecedores.
+                </p>
+              ) : (
+                <ul className="stack-lista-itens">
+                  {categoriasSemSolicitacao.map((cat) => {
+                    const jaNoBanco = (festa.stack || []).some(
+                      (s) => s.categoria_id === cat.categoria_id,
+                    );
+
+                    return (
+                      <li key={cat.categoria_id} className="stack-item-linha">
+                        <div className="stack-item-info">
+                          <strong>{cat.categoria_nome}</strong> — Sem solicitações enviadas
+                        </div>
+                        <div className="stack-item-botoes">
+                          <button
+                            type="button"
+                            className="btn-pilula-magenta btn-sm"
+                            onClick={() =>
+                              buscarFornecedoresDaCategoria(cat.categoria_id)
+                            }
+                          >
+                            Buscar fornecedores
+                          </button>
+                          {!jaNoBanco && (
+                            <button
+                              type="button"
+                              className="btn-pilula-remover btn-sm"
+                              onClick={() =>
+                                aoRemoverCategoriaLocal(cat.categoria_id)
+                              }
+                            >
+                              Remover da lista
+                            </button>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+
+              {categoriaBuscaAtiva !== null && (
+                <div className="stack-busca-resultado">
+                  <h3 className="subtitulo-busca">
+                    Fornecedores para: {nomeCategoriaAtiva}
+                  </h3>
+                  
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      buscarFornecedoresDaCategoria(categoriaBuscaAtiva, cidadeFiltro);
+                    }}
+                    className="stack-busca-filtro-form"
+                  >
+                    <label htmlFor="stack-cidade">Filtrar por cidade / local:</label>
+                    <input
+                      id="stack-cidade"
+                      type="text"
+                      className="stack-input-pilula"
+                      value={cidadeFiltro}
+                      onChange={(e) => setCidadeFiltro(e.target.value)}
+                      placeholder="Ex.: Pelotas"
+                    />
+                    <button type="submit" className="btn-pilula-magenta btn-sm">
+                      Filtrar
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-pilula-magenta btn-sm"
+                      onClick={() => {
+                        setCidadeFiltro('');
+                        buscarFornecedoresDaCategoria(categoriaBuscaAtiva, '');
+                      }}
+                    >
+                      Limpar
+                    </button>
+                    {festa.local && (
                       <button
                         type="button"
+                        className="btn-pilula-secundario btn-sm"
                         onClick={() => {
                           setCidadeFiltro(festa.local);
                           buscarFornecedoresDaCategoria(
@@ -520,150 +554,168 @@ export function StackDaFesta({ id }) {
                       >
                         Usar local da festa ({festa.local})
                       </button>
-                    </>
+                    )}
+                  </form>
+
+                  {carregandoFornecedores && (
+                    <p className="stack-info-msg">Buscando fornecedores...</p>
                   )}
-                </form>
 
-                {carregandoFornecedores && <p>Buscando fornecedores...</p>}
-                {!carregandoFornecedores && fornecedoresEncontrados.length === 0 && (
-                  <div>
-                    <p>
-                      Nenhum fornecedor ativo encontrado para {nomeCategoriaAtiva}
-                      {cidadeAplicada ? ` em "${cidadeAplicada}"` : ''}.
-                    </p>
-                    {cidadeAplicada && totalFornecedoresCategoria > 0 && (
+                  {!carregandoFornecedores && fornecedoresEncontrados.length === 0 && (
+                    <div className="stack-aviso-busca">
                       <p>
-                        Existem {totalFornecedoresCategoria} fornecedor(es) ativo(s)
-                        para esta categoria em outras cidades.{' '}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCidadeFiltro('');
-                            buscarFornecedoresDaCategoria(categoriaBuscaAtiva, '');
-                          }}
-                        >
-                          Mostrar todas as cidades
-                        </button>
+                        Nenhum fornecedor ativo encontrado para {nomeCategoriaAtiva}
+                        {cidadeAplicada ? ` em "${cidadeAplicada}"` : ''}.
                       </p>
-                    )}
-                  </div>
-                )}
-                {!carregandoFornecedores && fornecedoresEncontrados.length > 0 && (
-                  <ul>
-                    {fornecedoresEncontrados.map((forn) => {
-                      const servico = (forn.servicos || []).find(
-                        (s) => s.categoria_id === categoriaBuscaAtiva,
-                      );
-                      const chave = `${forn.id}-${categoriaBuscaAtiva}`;
-                      const jaSolicitado = (festa.solicitacoes || []).some(
-                        (s) =>
-                          s.fornecedor_id === forn.id &&
-                          s.categoria_id === categoriaBuscaAtiva,
-                      );
+                      {cidadeAplicada && totalFornecedoresCategoria > 0 && (
+                        <p>
+                          Existem {totalFornecedoresCategoria} fornecedor(es) ativo(s)
+                          para esta categoria em outras cidades.{' '}
+                          <button
+                            type="button"
+                            className="btn-pilula-magenta btn-sm"
+                            style={{ marginLeft: '8px' }}
+                            onClick={() => {
+                              setCidadeFiltro('');
+                              buscarFornecedoresDaCategoria(categoriaBuscaAtiva, '');
+                            }}
+                          >
+                            Mostrar todas as cidades
+                          </button>
+                        </p>
+                      )}
+                    </div>
+                  )}
 
-                      return (
-                        <li key={forn.id}>
-                          <strong>{forn.nome_empresa}</strong> ({forn.cidade || 'Sem cidade'})
-                          <br />
-                          {servico?.descricao && <span>{servico.descricao} — </span>}
-                          {servico?.preco_referencia && (
-                            <span>Preço: {servico.preco_referencia} — </span>
-                          )}
-                          <span>
-                            Contatos: {forn.telefone_contato}
-                            {forn.whatsapp ? ` / WhatsApp: ${forn.whatsapp}` : ''}
-                            {forn.email_contato ? ` / ${forn.email_contato}` : ''}
-                          </span>
-                          <br />
-                          <Link to={`/fornecedores/${forn.id}`}>Ver perfil completo</Link>
-                          {festa.status === 'PLANEJANDO' && (
-                            <div>
-                              {jaSolicitado ? (
-                                <span>
-                                  <em>Já solicitado para esta categoria nesta festa.</em>
-                                </span>
-                              ) : (
-                                <>
-                                  <input
-                                    type="text"
-                                    placeholder="Mensagem opcional para o fornecedor"
-                                    value={mensagensPorFornecedor[chave] || ''}
-                                    onChange={(e) =>
-                                      setMensagensPorFornecedor((prev) => ({
-                                        ...prev,
-                                        [chave]: e.target.value,
-                                      }))
-                                    }
-                                  />{' '}
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      aoSolicitarContato(forn.id, categoriaBuscaAtiva)
-                                    }
-                                  >
-                                    Solicitar contato
-                                  </button>
-                                </>
-                              )}
+                  {!carregandoFornecedores && fornecedoresEncontrados.length > 0 && (
+                    <ul className="stack-fornecedores-lista">
+                      {fornecedoresEncontrados.map((forn) => {
+                        const servico = (forn.servicos || []).find(
+                          (s) => s.categoria_id === categoriaBuscaAtiva,
+                        );
+                        const chave = `${forn.id}-${categoriaBuscaAtiva}`;
+                        const jaSolicitado = (festa.solicitacoes || []).some(
+                          (s) =>
+                            s.fornecedor_id === forn.id &&
+                            s.categoria_id === categoriaBuscaAtiva,
+                        );
+
+                        return (
+                          <li key={forn.id} className="fornecedor-card-item">
+                            <div className="forn-info-topo">
+                              <strong>{forn.nome_empresa}</strong> ({forn.cidade || 'Sem cidade'})
                             </div>
-                          )}
-                          <br />
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            )}
-          </section>
+                            <div className="forn-detalhes-texto">
+                              {servico?.descricao && <span>{servico.descricao} — </span>}
+                              {servico?.preco_referencia && (
+                                <span>Preço: {servico.preco_referencia} — </span>
+                              )}
+                              <span>
+                                Contatos: {forn.telefone_contato}
+                                {forn.whatsapp ? ` / WhatsApp: ${forn.whatsapp}` : ''}
+                                {forn.email_contato ? ` / ${forn.email_contato}` : ''}
+                              </span>
+                            </div>
+                            <div className="forn-perfil-link-row">
+                              <Link to={`/fornecedores/${forn.id}`} className="stack-link-underline">
+                                Ver perfil completo
+                              </Link>
+                            </div>
 
-          <hr />
+                            {festa.status === 'PLANEJANDO' && (
+                              <div className="forn-solicitar-box">
+                                {jaSolicitado ? (
+                                  <span className="forn-ja-solicitado">
+                                    <em>Já solicitado para esta categoria nesta festa.</em>
+                                  </span>
+                                ) : (
+                                  <div className="forn-solicitar-form">
+                                    <input
+                                      type="text"
+                                      className="stack-input-pilula forn-input-msg"
+                                      placeholder="Mensagem opcional para o fornecedor"
+                                      value={mensagensPorFornecedor[chave] || ''}
+                                      onChange={(e) =>
+                                        setMensagensPorFornecedor((prev) => ({
+                                          ...prev,
+                                          [chave]: e.target.value,
+                                        }))
+                                      }
+                                    />
+                                    <button
+                                      type="button"
+                                      className="btn-pilula-magenta btn-sm"
+                                      onClick={() =>
+                                        aoSolicitarContato(forn.id, categoriaBuscaAtiva)
+                                      }
+                                    >
+                                      Solicitar contato
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </section>
 
-          <section>
-            <h3>Solicitações da festa</h3>
-            {festa.solicitacoes.length === 0 ? (
-              <p>Nenhuma solicitação enviada para esta festa ainda.</p>
-            ) : (
-              <ul>
-                {festa.solicitacoes.map((s) => (
-                  <li key={s.id}>
-                    <p>
-                      <strong>{s.categoria_nome}</strong> — {s.fornecedor_nome} —{' '}
-                      <strong>Status: {s.status}</strong>
-                    </p>
-                    <p>
-                      Contatos do fornecedor: {s.telefone_contato}
-                      {s.whatsapp ? ` | WhatsApp: ${s.whatsapp}` : ''}
-                      {s.email_contato ? ` | E-mail: ${s.email_contato}` : ''}
-                    </p>
-                    {s.mensagem && (
-                      <p>
-                        <strong>Sua mensagem:</strong> {s.mensagem}
+            <hr className="stack-divisor" />
+
+            <section className="stack-secao">
+              <h2 className="stack-secao-titulo">Solicitações da festa</h2>
+              {festa.solicitacoes.length === 0 ? (
+                <p className="stack-aviso-vazio">
+                  Nenhuma solicitação enviada para esta festa ainda.
+                </p>
+              ) : (
+                <ul className="stack-solicitacoes-lista">
+                  {festa.solicitacoes.map((s) => (
+                    <li key={s.id} className="solicitacao-item-card">
+                      <div className="solicitacao-topo">
+                        <strong className="solic-cat-nome">{s.categoria_nome}</strong> — {s.fornecedor_nome}
+                        <span className={`solic-badge badge-${s.status.toLowerCase()}`}>
+                          Status: {s.status}
+                        </span>
+                      </div>
+                      <p className="solic-contatos">
+                        Contatos do fornecedor: {s.telefone_contato}
+                        {s.whatsapp ? ` | WhatsApp: ${s.whatsapp}` : ''}
+                        {s.email_contato ? ` | E-mail: ${s.email_contato}` : ''}
                       </p>
-                    )}
-                    {s.resposta && (
-                      <p>
-                        <strong>Resposta do fornecedor:</strong> {s.resposta}
-                      </p>
-                    )}
-                    {s.status === 'PENDENTE' && festa.status === 'PLANEJANDO' && (
-                      <p>
-                        <button
-                          type="button"
-                          onClick={() => aoCancelarSolicitacao(s.id)}
-                        >
-                          Cancelar solicitação
-                        </button>
-                      </p>
-                    )}
-                    <hr />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </>
-      )}
-    </Layout>
+                      {s.mensagem && (
+                        <p className="solic-mensagem">
+                          <strong>Sua mensagem:</strong> &quot;{s.mensagem}&quot;
+                        </p>
+                      )}
+                      {s.resposta && (
+                        <p className="solic-resposta">
+                          <strong>Resposta do fornecedor:</strong> &quot;{s.resposta}&quot;
+                        </p>
+                      )}
+                      {s.status === 'PENDENTE' && festa.status === 'PLANEJANDO' && (
+                        <div className="solic-acoes">
+                          <button
+                            type="button"
+                            className="btn-pilula-remover btn-sm"
+                            onClick={() => aoCancelarSolicitacao(s.id)}
+                          >
+                            Cancelar solicitação
+                          </button>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </>
+        )}
+      </main>
+    </LayoutPagsInicio>
   );
 }

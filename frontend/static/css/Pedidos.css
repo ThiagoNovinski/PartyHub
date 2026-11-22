@@ -1,0 +1,273 @@
+.pedidos-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.pedidos-page-title {
+  font-family: 'Chewy', cursive, sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: #43446b;
+  margin: 0 0 20px 0;
+  letter-spacing: -0.2px;
+}
+
+.pedidos-filtro-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.pedidos-filtro-label {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #43446b;
+}
+
+.pedidos-status-select {
+  height: 32px;
+  width: 160px;
+  padding: 0 16px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #43446b;
+  background-color: #ffffff;
+  border: 1.5px solid #6b6e92;
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pedidos-status-select:focus {
+  border-color: #d82b5a;
+  box-shadow: 0 0 0 2px rgba(216, 43, 90, 0.15);
+}
+
+.pedidos-info-msg {
+  font-size: 14.5px;
+  color: #555877;
+  margin: 20px 0;
+}
+
+.msg-feedback {
+  font-size: 14px;
+  margin: 0 0 16px 0;
+}
+
+.msg-sucesso {
+  color: #1b8a36;
+  font-weight: 600;
+}
+
+.msg-erro {
+  color: #d82b5a;
+}
+
+.pedidos-lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.pedido-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.pedido-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.pedido-titulo {
+  font-size: 16px;
+  font-weight: 700;
+  color: #43446b;
+  margin: 0;
+}
+
+.pedido-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.badge-pendente {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+.badge-aceita {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.badge-recusada,
+.badge-cancelada {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.pedido-detalhes-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pedido-linha {
+  font-size: 13.5px;
+  color: #43446b;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.pedido-linha strong {
+  color: #333333;
+}
+
+.pedido-caixa-mensagem,
+.pedido-caixa-resposta {
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  margin-top: 4px;
+  max-width: 800px;
+}
+
+.pedido-caixa-mensagem {
+  background-color: #f8f9fc;
+  border: 1px solid #e2e4ef;
+  color: #43446b;
+}
+
+.pedido-caixa-resposta {
+  background-color: #fdf2f4;
+  border: 1px solid #fad2dc;
+  color: #555877;
+}
+
+.pedido-resposta-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  max-width: 800px;
+}
+
+.pedido-input-observacao {
+  flex: 1;
+  min-width: 260px;
+  height: 34px;
+  padding: 0 16px;
+  font-size: 13.5px;
+  border: 1.5px solid #6b6e92;
+  border-radius: 9999px;
+  outline: none;
+  background-color: #ffffff;
+  transition: border-color 0.2s ease;
+}
+
+.pedido-input-observacao:focus {
+  border-color: #d82b5a;
+}
+
+.pedido-acoes-botoes {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-pedido-aceitar {
+  height: 34px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 9999px;
+  background-color: #0b9565;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-pedido-aceitar:hover {
+  background-color: #08754f;
+}
+
+.btn-pedido-recusar {
+  height: 34px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 9999px;
+  background-color: #d82b5a;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-pedido-recusar:hover {
+  background-color: #bf1d48;
+}
+
+.pedido-separador {
+  width: 100%;
+  border: none;
+  border-top: 1.5px solid #d4d6e2;
+  margin: 24px 0 0 0;
+}
+
+.nav-fornecedor-bloco {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.15;
+}
+
+.nav-fornecedor-tag {
+  font-size: 10px;
+  font-weight: 800;
+  color: #c9ccd8;
+  letter-spacing: 0.5px;
+}
+
+.nav-fornecedor-nome {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+@media (max-width: 680px) {
+  .pedido-resposta-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .pedido-input-observacao {
+    width: 100%;
+  }
+
+  .pedido-acoes-botoes {
+    justify-content: flex-end;
+  }
+}

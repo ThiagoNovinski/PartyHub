@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Layout } from '../components/Layout';
+import { LayoutPagsInicio } from '../components/LayoutPagsInicio'; 
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import '../../static/css/PerfilFornecedor.css';
 
 function chaveFornecedorUsuario(usuarioId) {
   return `partyhub_fornecedor_id_${usuarioId}`;
@@ -136,7 +137,7 @@ export function PerfilFornecedor() {
       setSucesso(
         atualizado.ativo
           ? 'Perfil ativado no catálogo.'
-          : 'Perfil desativado temporariamente.',
+          : 'Perfil desativado temporariamente do catálogo.',
       );
     } catch (err) {
       setErro(err.message || 'Erro ao alterar status do perfil.');
@@ -215,272 +216,293 @@ export function PerfilFornecedor() {
   }
 
   return (
-    <Layout titulo="Meu Perfil e Serviços">
-      {erro && (
-        <p role="alert">
-          <strong>Erro:</strong> {erro}
-        </p>
-      )}
-      {sucesso && <p>{sucesso}</p>}
-      {carregando && <p>Carregando...</p>}
+    <LayoutPagsInicio titulo="Meu perfil e Serviços">
+      <main className="perfil-fornecedor-container">
+        <h1 className="perfil-page-title">Meu perfil e Serviços</h1>
 
-      {!carregando && (
-        <>
-          <section>
-            <h3>Dados da empresa</h3>
-            {perfil && (
-              <p>
-                <strong>Visibilidade no catálogo:</strong>{' '}
-                {perfil.ativo ? 'Ativo' : 'Desativado'}{' '}
-                <button type="button" onClick={aoAlternarAtivo}>
-                  {perfil.ativo ? 'Desativar perfil' : 'Ativar perfil'}
-                </button>
-                <br />
-                <small>
-                  Nota: seu perfil aparece no catálogo público apenas quando está
-                  ativo e possui ao menos 1 serviço cadastrado.
-                </small>
-              </p>
-            )}
+        {sucesso && <p className="msg-feedback msg-sucesso">{sucesso}</p>}
+        {erro && (
+          <p role="alert" className="msg-feedback msg-erro">
+            <strong>Erro:</strong> {erro}
+          </p>
+        )}
+        {carregando && <p className="perfil-loading">Carregando dados do perfil...</p>}
 
-            <form onSubmit={aoSalvarPerfil}>
-              <div>
-                <label htmlFor="forn-empresa">Nome da empresa *</label>
-                <br />
-                <input
-                  id="forn-empresa"
-                  type="text"
-                  value={formPerfil.nome_empresa}
-                  onChange={(e) =>
-                    setFormPerfil((p) => ({ ...p, nome_empresa: e.target.value }))
-                  }
-                  maxLength={120}
-                  required
-                />
-              </div>
-              <br />
-              <div>
-                <label htmlFor="forn-tel">Telefone de contato *</label>
-                <br />
-                <input
-                  id="forn-tel"
-                  type="text"
-                  value={formPerfil.telefone_contato}
-                  onChange={(e) =>
-                    setFormPerfil((p) => ({
-                      ...p,
-                      telefone_contato: e.target.value,
-                    }))
-                  }
-                  maxLength={30}
-                  required
-                />
-              </div>
-              <br />
-              <div>
-                <label htmlFor="forn-whats">WhatsApp</label>
-                <br />
-                <input
-                  id="forn-whats"
-                  type="text"
-                  value={formPerfil.whatsapp}
-                  onChange={(e) =>
-                    setFormPerfil((p) => ({ ...p, whatsapp: e.target.value }))
-                  }
-                  maxLength={30}
-                />
-              </div>
-              <br />
-              <div>
-                <label htmlFor="forn-email">E-mail de contato</label>
-                <br />
-                <input
-                  id="forn-email"
-                  type="email"
-                  value={formPerfil.email_contato}
-                  onChange={(e) =>
-                    setFormPerfil((p) => ({ ...p, email_contato: e.target.value }))
-                  }
-                  maxLength={120}
-                />
-              </div>
-              <br />
-              <div>
-                <label htmlFor="forn-cidade">Cidade</label>
-                <br />
-                <input
-                  id="forn-cidade"
-                  type="text"
-                  value={formPerfil.cidade}
-                  onChange={(e) =>
-                    setFormPerfil((p) => ({ ...p, cidade: e.target.value }))
-                  }
-                  maxLength={80}
-                />
-              </div>
-              <br />
-              <div>
-                <label htmlFor="forn-desc">Descrição</label>
-                <br />
-                <textarea
-                  id="forn-desc"
-                  rows={3}
-                  cols={40}
-                  value={formPerfil.descricao}
-                  onChange={(e) =>
-                    setFormPerfil((p) => ({ ...p, descricao: e.target.value }))
-                  }
-                />
-              </div>
-              <br />
-              <button type="submit">
-                {perfil ? 'Atualizar perfil' : 'Criar perfil de fornecedor'}
-              </button>
-            </form>
-          </section>
+        {!carregando && (
+          <>
+            <section className="perfil-secao">
+              <h2 className="perfil-secao-titulo">Dados da empresa</h2>
 
-          <hr />
-
-          <section>
-            <h3>Serviços que entrego</h3>
-            {!perfil ? (
-              <p>Salve os dados da empresa acima antes de adicionar serviços.</p>
-            ) : (
-              <>
-                {(perfil.servicos || []).length === 0 ? (
-                  <p>Nenhum serviço cadastrado ainda.</p>
-                ) : (
-                  <ul>
-                    {perfil.servicos.map((s) => (
-                      <li key={s.id}>
-                        {servicoEditandoId === s.id ? (
-                          <form onSubmit={(e) => aoSalvarEdicaoServico(e, s.id)}>
-                            <strong>{s.categoria_nome}</strong>
-                            <br />
-                            <label htmlFor={`ed-serv-desc-${s.id}`}>
-                              Descrição:{' '}
-                            </label>
-                            <input
-                              id={`ed-serv-desc-${s.id}`}
-                              type="text"
-                              value={formServicoEdicao.descricao}
-                              onChange={(e) =>
-                                setFormServicoEdicao((p) => ({
-                                  ...p,
-                                  descricao: e.target.value,
-                                }))
-                              }
-                            />{' '}
-                            <label htmlFor={`ed-serv-preco-${s.id}`}>
-                              Preço de referência:{' '}
-                            </label>
-                            <input
-                              id={`ed-serv-preco-${s.id}`}
-                              type="text"
-                              maxLength={80}
-                              value={formServicoEdicao.preco_referencia}
-                              onChange={(e) =>
-                                setFormServicoEdicao((p) => ({
-                                  ...p,
-                                  preco_referencia: e.target.value,
-                                }))
-                              }
-                            />{' '}
-                            <button type="submit">Salvar</button>{' '}
-                            <button
-                              type="button"
-                              onClick={() => setServicoEditandoId(null)}
-                            >
-                              Cancelar
-                            </button>
-                          </form>
-                        ) : (
-                          <div>
-                            <strong>{s.categoria_nome}</strong>
-                            {s.preco_referencia ? ` (${s.preco_referencia})` : ''}
-                            {s.descricao ? ` — ${s.descricao}` : ''}{' '}
-                            <button
-                              type="button"
-                              onClick={() => iniciarEdicaoServico(s)}
-                            >
-                              Editar
-                            </button>{' '}
-                            <button
-                              type="button"
-                              onClick={() => aoRemoverServico(s.id)}
-                            >
-                              Remover
-                            </button>
-                          </div>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-                <h4>Adicionar serviço</h4>
-                <form onSubmit={aoAdicionarServico}>
-                  <div>
-                    <label htmlFor="serv-cat">Categoria *</label>
-                    <br />
-                    <select
-                      id="serv-cat"
-                      value={novoServico.categoria_id}
-                      onChange={(e) =>
-                        setNovoServico((p) => ({
-                          ...p,
-                          categoria_id: e.target.value,
-                        }))
-                      }
-                      required
+              {perfil && (
+                <div className="visibilidade-box">
+                  <div className="visibilidade-status-row">
+                    <span className="visibilidade-label">
+                      Visibilidade no catálogo:{' '}
+                      <strong className={perfil.ativo ? 'status-ativo' : 'status-inativo'}>
+                        {perfil.ativo ? 'Ativo' : 'Desativado'}
+                      </strong>
+                    </span>
+                    <button
+                      type="button"
+                      className="btn-toggle-status"
+                      onClick={aoAlternarAtivo}
                     >
-                      {categorias.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.nome}
-                        </option>
+                      {perfil.ativo ? 'Desativar perfil' : 'Ativar perfil'}
+                    </button>
+                  </div>
+                  <small className="visibilidade-nota">
+                    Nota: seu perfil aparece no catálogo público apenas quando está ativo e possui ao menos 1 serviço cadastrado.
+                  </small>
+                </div>
+              )}
+
+              <form onSubmit={aoSalvarPerfil} className="fornecedor-form">
+                <div className="form-row">
+                  <label htmlFor="forn-empresa">Nome da empresa *</label>
+                  <input
+                    id="forn-empresa"
+                    type="text"
+                    value={formPerfil.nome_empresa}
+                    onChange={(e) =>
+                      setFormPerfil((p) => ({ ...p, nome_empresa: e.target.value }))
+                    }
+                    maxLength={120}
+                    required
+                  />
+                </div>
+
+                <div className="form-row">
+                  <label htmlFor="forn-tel">Telefone de contato *</label>
+                  <input
+                    id="forn-tel"
+                    type="text"
+                    value={formPerfil.telefone_contato}
+                    onChange={(e) =>
+                      setFormPerfil((p) => ({
+                        ...p,
+                        telefone_contato: e.target.value,
+                      }))
+                    }
+                    maxLength={30}
+                    required
+                  />
+                </div>
+
+                <div className="form-row">
+                  <label htmlFor="forn-whats">WhatsApp</label>
+                  <input
+                    id="forn-whats"
+                    type="text"
+                    value={formPerfil.whatsapp}
+                    onChange={(e) =>
+                      setFormPerfil((p) => ({ ...p, whatsapp: e.target.value }))
+                    }
+                    maxLength={30}
+                  />
+                </div>
+
+                <div className="form-row">
+                  <label htmlFor="forn-email">E-mail de contato</label>
+                  <input
+                    id="forn-email"
+                    type="email"
+                    value={formPerfil.email_contato}
+                    onChange={(e) =>
+                      setFormPerfil((p) => ({ ...p, email_contato: e.target.value }))
+                    }
+                    maxLength={120}
+                  />
+                </div>
+
+                <div className="form-row">
+                  <label htmlFor="forn-cidade">Cidade</label>
+                  <input
+                    id="forn-cidade"
+                    type="text"
+                    value={formPerfil.cidade}
+                    onChange={(e) =>
+                      setFormPerfil((p) => ({ ...p, cidade: e.target.value }))
+                    }
+                    maxLength={80}
+                  />
+                </div>
+
+                <div className="form-row form-row-textarea">
+                  <label htmlFor="forn-desc">Descrição</label>
+                  <textarea
+                    id="forn-desc"
+                    rows={3}
+                    value={formPerfil.descricao}
+                    onChange={(e) =>
+                      setFormPerfil((p) => ({ ...p, descricao: e.target.value }))
+                    }
+                  />
+                </div>
+
+                <div className="form-actions">
+                  <button type="submit" className="btn-acao-magenta">
+                    {perfil ? 'Atualizar perfil' : 'Criar perfil de fornecedor'}
+                  </button>
+                </div>
+              </form>
+            </section>
+
+            <hr className="perfil-divider" />
+
+            <section className="perfil-secao">
+              <h2 className="perfil-secao-titulo">Serviços que entrego</h2>
+
+              {!perfil ? (
+                <p className="perfil-aviso-bloqueio">
+                  Salve os dados da empresa acima antes de adicionar serviços.
+                </p>
+              ) : (
+                <div className="servicos-gestao">
+                  {(perfil.servicos || []).length === 0 ? (
+                    <p className="servicos-vazio">Nenhum serviço cadastrado ainda.</p>
+                  ) : (
+                    <ul className="servicos-cadastrados-list">
+                      {perfil.servicos.map((s) => (
+                        <li key={s.id} className="servico-item">
+                          {servicoEditandoId === s.id ? (
+                            <form
+                              onSubmit={(e) => aoSalvarEdicaoServico(e, s.id)}
+                              className="form-edicao-servico"
+                            >
+                              <strong className="servico-categoria-titulo">{s.categoria_nome}</strong>
+                              <div className="form-row-inline">
+                                <label htmlFor={`ed-serv-desc-${s.id}`}>Descrição:</label>
+                                <input
+                                  id={`ed-serv-desc-${s.id}`}
+                                  type="text"
+                                  value={formServicoEdicao.descricao}
+                                  onChange={(e) =>
+                                    setFormServicoEdicao((p) => ({
+                                      ...p,
+                                      descricao: e.target.value,
+                                    }))
+                                  }
+                                />
+                                <label htmlFor={`ed-serv-preco-${s.id}`}>Preço de ref.:</label>
+                                <input
+                                  id={`ed-serv-preco-${s.id}`}
+                                  type="text"
+                                  maxLength={80}
+                                  value={formServicoEdicao.preco_referencia}
+                                  onChange={(e) =>
+                                    setFormServicoEdicao((p) => ({
+                                      ...p,
+                                      preco_referencia: e.target.value,
+                                    }))
+                                  }
+                                />
+                                <button type="submit" className="btn-acao-magenta btn-sm">Salvar</button>
+                                <button
+                                  type="button"
+                                  className="btn-cancelar-sm"
+                                  onClick={() => setServicoEditandoId(null)}
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                            </form>
+                          ) : (
+                            <div className="servico-item-view">
+                              <span className="servico-texto">
+                                • <strong>{s.categoria_nome}</strong>
+                                {s.preco_referencia ? ` — a partir de ${s.preco_referencia}` : ''}
+                                {s.descricao ? ` (${s.descricao})` : ''}
+                              </span>
+                              <div className="servico-acoes">
+                                <button
+                                  type="button"
+                                  className="btn-link-acao"
+                                  onClick={() => iniciarEdicaoServico(s)}
+                                >
+                                  Editar
+                                </button>
+                                <span className="separador">|</span>
+                                <button
+                                  type="button"
+                                  className="btn-link-acao btn-link-remover"
+                                  onClick={() => aoRemoverServico(s.id)}
+                                >
+                                  Remover
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </li>
                       ))}
-                    </select>
+                    </ul>
+                  )}
+
+                  <div className="adicionar-servico-box">
+                    <h3 className="subtitulo-adicionar">Adicionar serviço</h3>
+                    <form onSubmit={aoAdicionarServico} className="fornecedor-form">
+                      <div className="form-row">
+                        <label htmlFor="serv-cat">Categoria *</label>
+                        <select
+                          id="serv-cat"
+                          value={novoServico.categoria_id}
+                          onChange={(e) =>
+                            setNovoServico((p) => ({
+                              ...p,
+                              categoria_id: e.target.value,
+                            }))
+                          }
+                          required
+                        >
+                          {categorias.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.nome}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-row">
+                        <label htmlFor="serv-preco">Preço de referência</label>
+                        <input
+                          id="serv-preco"
+                          type="text"
+                          placeholder="Ex.: a partir de R$ 800"
+                          maxLength={80}
+                          value={novoServico.preco_referencia}
+                          onChange={(e) =>
+                            setNovoServico((p) => ({
+                              ...p,
+                              preco_referencia: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div className="form-row form-row-textarea">
+                        <label htmlFor="serv-desc">Descrição</label>
+                        <textarea
+                          id="serv-desc"
+                          rows={2}
+                          value={novoServico.descricao}
+                          onChange={(e) =>
+                            setNovoServico((p) => ({ ...p, descricao: e.target.value }))
+                          }
+                        />
+                      </div>
+
+                      <div className="form-actions">
+                        <button type="submit" className="btn-acao-magenta">
+                          Adicionar serviço
+                        </button>
+                      </div>
+                    </form>
                   </div>
-                  <br />
-                  <div>
-                    <label htmlFor="serv-preco">Preço de referência</label>
-                    <br />
-                    <input
-                      id="serv-preco"
-                      type="text"
-                      placeholder="Ex.: a partir de R$ 800"
-                      maxLength={80}
-                      value={novoServico.preco_referencia}
-                      onChange={(e) =>
-                        setNovoServico((p) => ({
-                          ...p,
-                          preco_referencia: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <br />
-                  <div>
-                    <label htmlFor="serv-desc">Descrição</label>
-                    <br />
-                    <textarea
-                      id="serv-desc"
-                      rows={2}
-                      cols={40}
-                      value={novoServico.descricao}
-                      onChange={(e) =>
-                        setNovoServico((p) => ({ ...p, descricao: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <br />
-                  <button type="submit">Adicionar serviço</button>
-                </form>
-              </>
-            )}
-          </section>
-        </>
-      )}
-    </Layout>
+                </div>
+              )}
+            </section>
+          </>
+        )}
+      </main>
+    </LayoutPagsInicio>
   );
 }
