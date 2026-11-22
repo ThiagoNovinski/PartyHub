@@ -1,43 +1,46 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Layout } from '../components/Layout';
+import { LayoutPagsInicio } from '../components/LayoutPagsInicio';
 import { Link } from '../router';
 import { api } from '../services/api';
 import { filtrarFornecedoresPorLocal } from '../utils/filtrarFornecedores';
+import '../../static/css/Catalogo.css';
 
 export function Catalogo() {
   const [categorias, setCategorias] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
-  const [totalNaCategoria, setTotalNaCategoria] = useState(0);
   const [categoria, setCategoria] = useState('');
   const [cidade, setCidade] = useState('');
-  const [cidadeAplicada, setCidadeAplicada] = useState('');
-  const [carregando, setCarregando] = useState(true);
+  const [buscaRealizada, setBuscaRealizada] = useState(false);
+  const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState('');
-
-  const buscarCatalogo = useCallback(async (categoriaFiltro = '', cidadeFiltro = '') => {
-    setCarregando(true);
-    setErro('');
-    try {
-      const lista = await api.listarFornecedores({
-        categoria: categoriaFiltro || undefined,
-      });
-      setTotalNaCategoria(lista.length);
-      setCidadeAplicada(cidadeFiltro.trim());
-      setFornecedores(filtrarFornecedoresPorLocal(lista, cidadeFiltro));
-    } catch (err) {
-      setErro(err.message || 'Erro ao carregar fornecedores.');
-    } finally {
-      setCarregando(false);
-    }
-  }, []);
 
   useEffect(() => {
     api
       .listarCategorias()
       .then(setCategorias)
       .catch(() => {});
-    buscarCatalogo();
-  }, [buscarCatalogo]);
+  }, []);
+
+  const buscarCatalogo = useCallback(async (categoriaFiltro = '', cidadeFiltro = '') => {
+    setCarregando(true);
+    setErro('');
+    setBuscaRealizada(true);
+
+    try {
+      const lista = await api.listarFornecedores({
+        categoria: categoriaFiltro || undefined,
+      });
+
+      const fornecedoresAtivos = lista.filter((f) => f.ativo !== false);
+
+      const resultadoFinal = filtrarFornecedoresPorLocal(fornecedoresAtivos, cidadeFiltro);
+      setFornecedores(resultadoFinal);
+    } catch (err) {
+      setErro(err.message || 'Erro ao carregar fornecedores.');
+    } finally {
+      setCarregando(false);
+    }
+  }, []);
 
   function aoFiltrar(event) {
     event.preventDefault();
@@ -47,101 +50,109 @@ export function Catalogo() {
   function aoLimpar() {
     setCategoria('');
     setCidade('');
-    buscarCatalogo('', '');
+    setFornecedores([]);
+    setBuscaRealizada(false);
+    setErro('');
   }
 
   return (
-    <Layout titulo="Catálogo de Fornecedores">
-      <form onSubmit={aoFiltrar}>
-        <label htmlFor="filtro-categoria">Categoria: </label>
-        <select
-          id="filtro-categoria"
-          value={categoria}
-          onChange={(e) => setCategoria(e.target.value)}
-        >
-          <option value="">Todas</option>
-          {categorias.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.nome}
-            </option>
-          ))}
-        </select>{' '}
-        <label htmlFor="filtro-cidade">Cidade / Local: </label>
-        <input
-          id="filtro-cidade"
-          type="text"
-          value={cidade}
-          onChange={(e) => setCidade(e.target.value)}
-          placeholder="Ex.: Pelotas"
-        />{' '}
-        <button type="submit">Filtrar</button>{' '}
-        <button type="button" onClick={aoLimpar}>
-          Limpar
-        </button>
-      </form>
+    <LayoutPagsInicio titulo="Catálogo de Fornecedores">
+      <main className="catalogo-main-container">
+        <h1 className="catalogo-title">Catálogo de Fornecedores</h1>
 
-      <hr />
+        <form className="catalogo-filter-form" onSubmit={aoFiltrar}>
+          <div className="filter-item">
+            <label htmlFor="filtro-categoria">Categoria:</label>
+            <select
+              id="filtro-categoria"
+              value={categoria}
+              onChange={(e) => setCategoria(e.target.value)}
+            >
+              <option value="">Todas</option>
+              {categorias.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.nome}
+                </option>
+              ))}
+            </select>
+          </div>
 
-      {erro && (
-        <p role="alert">
-          <strong>Erro:</strong> {erro}
-        </p>
-      )}
-      {carregando && <p>Carregando fornecedores...</p>}
+          <div className="filter-item">
+            <label htmlFor="filtro-cidade">Cidade/Local:</label>
+            <input
+              id="filtro-cidade"
+              type="text"
+              value={cidade}
+              onChange={(e) => setCidade(e.target.value)}
+            />
+          </div>
 
-      {!carregando && !erro && fornecedores.length === 0 && (
-        <div>
-          <p>
-            Nenhum fornecedor ativo encontrado
-            {cidadeAplicada ? ` para "${cidadeAplicada}"` : ''} com os filtros
-            informados.
+          <button type="submit" className="btn-filtrar">
+            Filtrar
+          </button>
+          <button type="button" className="btn-limpar" onClick={aoLimpar}>
+            Limpar
+          </button>
+        </form>
+
+        <hr className="catalogo-divider" />
+
+        {carregando && (
+          <p className="catalogo-msg-info">Pesquisando fornecedores...</p>
+        )}
+
+        {erro && (
+          <p className="catalogo-msg-erro" role="alert">
+            {erro}
           </p>
-          {cidadeAplicada && totalNaCategoria > 0 && (
-            <p>
-              Existem {totalNaCategoria} fornecedor(es) ativo(s) em outras
-              cidades.{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setCidade('');
-                  buscarCatalogo(categoria, '');
-                }}
-              >
-                Ver todas as cidades
-              </button>
-            </p>
-          )}
-        </div>
-      )}
+        )}
 
-      {!carregando && fornecedores.length > 0 && (
-        <ul>
-          {fornecedores.map((f) => (
-            <li key={f.id}>
-              <h3>{f.nome_empresa}</h3>
-              <p>
-                <strong>Cidade:</strong> {f.cidade || 'Não informada'}
-              </p>
-              {f.descricao && <p>{f.descricao}</p>}
-              <p>
-                <strong>Serviços:</strong>
-              </p>
-              <ul>
-                {(f.servicos || []).map((s) => (
-                  <li key={s.id}>
-                    {s.categoria_nome}
-                    {s.preco_referencia ? ` — ${s.preco_referencia}` : ''}
-                  </li>
-                ))}
-              </ul>
-              <p>
-                <Link to={`/fornecedores/${f.id}`}>Ver detalhes e contatos</Link>
-              </p>
-              <hr />
-            </li>
-          ))}
-        </ul>
-      )}
-    </Layout>
+        {buscaRealizada && !carregando && !erro && fornecedores.length === 0 && (
+          <p className="catalogo-msg-vazio">
+            Nenhum fornecedor ativo encontrado para os filtros selecionados.
+          </p>
+        )}
+
+        {buscaRealizada && !carregando && fornecedores.length > 0 && (
+          <div className="catalogo-lista-fornecedores">
+            {fornecedores.map((fornecedor) => (
+              <div key={fornecedor.id}>
+                <article className="supplier-item">
+                  <h3>• {fornecedor.nome_empresa}</h3>
+                  <p className="supplier-city">
+                    <strong>Cidade:</strong> {fornecedor.cidade || 'Não informada'}
+                  </p>
+                  
+                  {fornecedor.descricao && (
+                    <p className="supplier-desc">{fornecedor.descricao}</p>
+                  )}
+
+                  {fornecedor.servicos && fornecedor.servicos.length > 0 && (
+                    <>
+                      <p className="supplier-services-title">Serviços:</p>
+                      <ul className="supplier-services-list">
+                        {fornecedor.servicos.map((servico) => (
+                          <li key={servico.id}>
+                            • {servico.categoria_nome || servico.nome}
+                            {servico.preco_referencia ? ` - a partir de ${servico.preco_referencia}` : ''}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+
+                  <p className="supplier-link">
+                    <Link to={`/fornecedores/${fornecedor.id}`}>
+                      Ver detalhes e contatos
+                    </Link>
+                  </p>
+                </article>
+                <hr className="supplier-separator" />
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+    </LayoutPagsInicio>
   );
 }
